@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Printer, BarChart3, LogOut, Search, Clock, AlertCircle } from 'lucide-react';
+import { Printer, BarChart3, LogOut, Search, Clock, AlertCircle, Inbox } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { DB } from '../../utils/db';
 import { Order } from '../../types';
@@ -71,6 +71,9 @@ export default function ShopDashboard() {
         <nav className="space-y-1 flex-1">
           <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-green-primary/20 text-green-300">
             <Printer size={18} /> Print Queue
+          </button>
+          <button onClick={() => navigate('/shop/submissions')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-green-300/60 hover:text-green-300 hover:bg-green-primary/10 transition">
+            <Inbox size={18} /> Submissions Inbox
           </button>
           <button onClick={() => navigate('/shop/analytics')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-green-300/60 hover:text-green-300 hover:bg-green-primary/10 transition">
             <BarChart3 size={18} /> Analytics

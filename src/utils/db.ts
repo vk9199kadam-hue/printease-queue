@@ -1,4 +1,4 @@
-import { User, Shopkeeper, Order, Pricing, Session } from '../types';
+import { User, Shopkeeper, Order, Pricing, Session, Submission, Notice } from '../types';
 
 const KEYS = {
   USERS: 'printease_users',
@@ -6,7 +6,8 @@ const KEYS = {
   ORDERS: 'printease_orders',
   FILES: 'printease_files',
   PRICING: 'printease_pricing',
-  SESSION: 'printease_session'
+  SESSION: 'printease_session',
+  SUBMISSIONS: 'printease_submissions'
 } as const;
 
 export const DB = {
@@ -16,20 +17,21 @@ export const DB = {
   saveUsers(users: User[]): void {
     localStorage.setItem(KEYS.USERS, JSON.stringify(users));
   },
-  getUserByMobile(mobile: string): User | null {
-    return this.getUsers().find(u => u.mobile === mobile) || null;
+  getUserByEmail(email: string): User | null {
+    return this.getUsers().find(u => u.email === email) || null;
   },
   getUserById(id: string): User | null {
     return this.getUsers().find(u => u.id === id) || null;
   },
-  createUser(data: { name: string; mobile: string; gender: string }): User {
+  createUser(data: { name: string; email: string; password?: string; gender: string }): User {
     const users = this.getUsers();
     const year = new Date().getFullYear();
     const count = String(users.length + 1).padStart(3, '0');
     const user: User = {
       id: 'user_' + Date.now(),
       name: data.name,
-      mobile: data.mobile,
+      email: data.email,
+      password: data.password,
       gender: data.gender as User['gender'],
       student_print_id: `SID-${year}-${count}`,
       is_verified: true,
@@ -88,6 +90,7 @@ export const DB = {
     };
     orders.push(order);
     this.saveOrders(orders);
+    import('./supabaseDb').then(m => m.SupabaseDB.createOrder(order).catch(console.error));
     return order;
   },
   updateOrderStatus(order_id: string, print_status: Order['print_status']): Order | null {
@@ -111,6 +114,8 @@ export const DB = {
       const files = JSON.parse(localStorage.getItem(KEYS.FILES) || '{}');
       files[key] = base64;
       localStorage.setItem(KEYS.FILES, JSON.stringify(files));
+      // Background Sync to Supabase Storage Let it run asynchronously!
+      import('./supabaseDb').then(m => m.SupabaseDB.saveFile(key, base64).catch(console.error));
     } catch (e) {
       console.error('Storage full or error saving file:', e);
       throw new Error('Storage full. Please clear old orders first.');
@@ -153,5 +158,54 @@ export const DB = {
       ready: orders.filter(o => o.print_status === 'ready').length,
       completed: orders.filter(o => o.print_status === 'completed').length
     };
+  },
+  getSubmissions(): Submission[] {
+    return JSON.parse(localStorage.getItem(KEYS.SUBMISSIONS) || '[]').sort((a: Submission, b: Submission) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  },
+  getSubmissionsByStudent(student_id: string): Submission[] {
+    return this.getSubmissions().filter(s => s.student_id === student_id);
+  },
+  saveSubmissions(submissions: Submission[]): void {
+    localStorage.setItem(KEYS.SUBMISSIONS, JSON.stringify(submissions));
+  },
+  createSubmission(data: Omit<Submission, 'submission_id' | 'validation_status' | 'notices' | 'created_at' | 'updated_at'>): Submission {
+    const submissions = this.getSubmissions();
+    const year = new Date().getFullYear();
+    const count = String(submissions.length + 1).padStart(4, '0');
+    const submission: Submission = {
+      ...data,
+      submission_id: `SUB-${year}-${count}`,
+      validation_status: 'received',
+      notices: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    submissions.push(submission);
+    this.saveSubmissions(submissions);
+    return submission;
+  },
+  updateSubmissionStatus(submission_id: string, status: Submission['validation_status']): Submission | null {
+    const submissions = this.getSubmissions();
+    const index = submissions.findIndex(s => s.submission_id === submission_id);
+    if (index === -1) return null;
+    submissions[index].validation_status = status;
+    submissions[index].updated_at = new Date().toISOString();
+    this.saveSubmissions(submissions);
+    return submissions[index];
+  },
+  addNoticeToSubmission(submission_id: string, type: Notice['type'], message: string): Submission | null {
+    const submissions = this.getSubmissions();
+    const index = submissions.findIndex(s => s.submission_id === submission_id);
+    if (index === -1) return null;
+    const notice: Notice = {
+      id: 'not_' + Date.now(),
+      type,
+      message,
+      created_at: new Date().toISOString()
+    };
+    submissions[index].notices.push(notice);
+    submissions[index].updated_at = new Date().toISOString();
+    this.saveSubmissions(submissions);
+    return submissions[index];
   }
 };

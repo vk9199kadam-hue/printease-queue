@@ -1,7 +1,8 @@
 export interface User {
   id: string;
   name: string;
-  mobile: string;
+  email: string;
+  password?: string;
   gender: 'Male' | 'Female' | 'Other';
   student_print_id: string;
   is_verified: boolean;
@@ -83,4 +84,33 @@ export interface PriceResult {
   subtotal: number;
   service_fee: number;
   total_amount: number;
+}
+
+export type SubmissionStatus = 'received' | 'under_review' | 'approved' | 'rejected' | 'resubmit';
+export type NoticeType = 'acknowledgment' | 'missing' | 'approved' | 'rejected' | 'resubmit';
+
+export interface Notice {
+  id: string;
+  type: NoticeType;
+  message: string;
+  created_at: string;
+}
+
+export interface Submission {
+  submission_id: string;
+  student_id: string;
+  student_name: string;
+  roll_number: string;
+  department: string;
+  academic_year: string;
+  guide_name: string;
+  project_title: string;
+  document_type: string;
+  remarks: string;
+  file_name: string;
+  file_storage_key: string;
+  validation_status: SubmissionStatus;
+  notices: Notice[];
+  created_at: string;
+  updated_at: string;
 }

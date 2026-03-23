@@ -9,20 +9,22 @@ export default function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-  const mobile = (location.state as any)?.mobile;
+  
+  const email = (location.state as any)?.email;
+  const password = (location.state as any)?.password;
 
   const [name, setName] = useState('');
   const [gender, setGender] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  if (!mobile) { navigate('/student/login'); return null; }
+  if (!email || !password) { navigate('/student/login'); return null; }
 
   const handleSubmit = async () => {
     if (!name.trim()) { setError('Please enter your name'); return; }
     if (!gender) { setError('Please select your gender'); return; }
     setLoading(true);
-    const user = DB.createUser({ name: name.trim(), mobile, gender });
+    const user = DB.createUser({ name: name.trim(), email, password, gender });
     login(user, 'student');
     playSuccessSound();
     await new Promise(r => setTimeout(r, 500));
@@ -33,9 +35,12 @@ export default function Profile() {
     <div className="min-h-screen flex items-center justify-center bg-secondary p-4">
       <div className="w-full max-w-md bg-card rounded-2xl shadow-lg p-8 animate-fade-in-up">
         <h1 className="font-syne font-bold text-2xl text-foreground mb-1">Complete Your Profile</h1>
-        <p className="text-muted-foreground text-sm mb-6">Tell us about yourself — just once</p>
+        <p className="text-muted-foreground text-sm mb-6">Tell us about yourself to complete registration</p>
 
         <div className="mb-4">
+          <div className="mb-4 p-3 rounded-lg bg-blue-50 border border-blue-200">
+             <p className="text-sm text-blue-800 text-center font-medium">Registering as: {email}</p>
+          </div>
           <label className="block text-sm font-medium text-foreground mb-1.5">Full Name</label>
           <input
             type="text"

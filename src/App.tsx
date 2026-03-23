@@ -6,7 +6,6 @@ import { Loader2 } from 'lucide-react';
 
 import Landing from './pages/Landing';
 import StudentLogin from './pages/student/Login';
-import OTPVerify from './pages/student/OTPVerify';
 import Profile from './pages/student/Profile';
 import StudentDashboard from './pages/student/Dashboard';
 import FileUpload from './pages/student/FileUpload';
@@ -16,6 +15,7 @@ import OrderTracking from './pages/student/OrderTracking';
 import OrderHistory from './pages/student/OrderHistory';
 import ShopLogin from './pages/shop/Login';
 import ShopDashboard from './pages/shop/Dashboard';
+import ShopSubmissions from './pages/shop/SubmissionsInbox';
 import OrderDetail from './pages/shop/OrderDetail';
 import Analytics from './pages/shop/Analytics';
 
@@ -38,7 +38,6 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/student/login" element={<StudentLogin />} />
-      <Route path="/student/otp" element={<OTPVerify />} />
       <Route path="/student/profile" element={<Profile />} />
       <Route path="/student/dashboard" element={<ProtectedStudentRoute><StudentDashboard /></ProtectedStudentRoute>} />
       <Route path="/student/upload" element={<ProtectedStudentRoute><FileUpload /></ProtectedStudentRoute>} />
@@ -48,6 +47,7 @@ function AppRoutes() {
       <Route path="/student/history" element={<ProtectedStudentRoute><OrderHistory /></ProtectedStudentRoute>} />
       <Route path="/shop/login" element={<ShopLogin />} />
       <Route path="/shop/dashboard" element={<ProtectedShopRoute><ShopDashboard /></ProtectedShopRoute>} />
+      <Route path="/shop/submissions" element={<ProtectedShopRoute><ShopSubmissions /></ProtectedShopRoute>} />
       <Route path="/shop/order/:order_id" element={<ProtectedShopRoute><OrderDetail /></ProtectedShopRoute>} />
       <Route path="/shop/analytics" element={<ProtectedShopRoute><Analytics /></ProtectedShopRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
