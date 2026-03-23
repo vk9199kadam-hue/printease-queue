@@ -1,27 +1,67 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { initializeApp } from './utils/init';
+import { Loader2 } from 'lucide-react';
 
-const queryClient = new QueryClient();
+import Landing from './pages/Landing';
+import StudentLogin from './pages/student/Login';
+import OTPVerify from './pages/student/OTPVerify';
+import Profile from './pages/student/Profile';
+import StudentDashboard from './pages/student/Dashboard';
+import FileUpload from './pages/student/FileUpload';
+import Payment from './pages/student/Payment';
+import OrderConfirmed from './pages/student/OrderConfirmed';
+import OrderTracking from './pages/student/OrderTracking';
+import OrderHistory from './pages/student/OrderHistory';
+import ShopLogin from './pages/shop/Login';
+import ShopDashboard from './pages/shop/Dashboard';
+import OrderDetail from './pages/shop/OrderDetail';
+import Analytics from './pages/shop/Analytics';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function ProtectedStudentRoute({ children }: { children: React.ReactNode }) {
+  const { session, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-blue-primary" size={32} /></div>;
+  if (!session || session.role !== 'student') return <Navigate to="/student/login" replace />;
+  return <>{children}</>;
+}
 
-export default App;
+function ProtectedShopRoute({ children }: { children: React.ReactNode }) {
+  const { session, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-green-primary" size={32} /></div>;
+  if (!session || session.role !== 'shopkeeper') return <Navigate to="/shop/login" replace />;
+  return <>{children}</>;
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/student/login" element={<StudentLogin />} />
+      <Route path="/student/otp" element={<OTPVerify />} />
+      <Route path="/student/profile" element={<Profile />} />
+      <Route path="/student/dashboard" element={<ProtectedStudentRoute><StudentDashboard /></ProtectedStudentRoute>} />
+      <Route path="/student/upload" element={<ProtectedStudentRoute><FileUpload /></ProtectedStudentRoute>} />
+      <Route path="/student/payment" element={<ProtectedStudentRoute><Payment /></ProtectedStudentRoute>} />
+      <Route path="/student/confirmed" element={<ProtectedStudentRoute><OrderConfirmed /></ProtectedStudentRoute>} />
+      <Route path="/student/track/:order_id" element={<ProtectedStudentRoute><OrderTracking /></ProtectedStudentRoute>} />
+      <Route path="/student/history" element={<ProtectedStudentRoute><OrderHistory /></ProtectedStudentRoute>} />
+      <Route path="/shop/login" element={<ShopLogin />} />
+      <Route path="/shop/dashboard" element={<ProtectedShopRoute><ShopDashboard /></ProtectedShopRoute>} />
+      <Route path="/shop/order/:order_id" element={<ProtectedShopRoute><OrderDetail /></ProtectedShopRoute>} />
+      <Route path="/shop/analytics" element={<ProtectedShopRoute><Analytics /></ProtectedShopRoute>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  useEffect(() => { initializeApp(); }, []);
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
