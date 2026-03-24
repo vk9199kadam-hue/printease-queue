@@ -55,8 +55,21 @@ export default function SubmissionsInbox() {
     setSubmissions(DB.getSubmissions());
   };
 
-  const downloadDoc = (key: string, name: string) => {
-    const data = DB.getFile(key);
+  const downloadDoc = async (key: string, name: string) => {
+    let data = DB.getFile(key);
+    if (!data) {
+      try {
+        const { SupabaseDB } = await import('../../utils/supabaseDb');
+        const url = await SupabaseDB.getFile(key);
+        if (url) {
+          window.open(url, '_blank');
+          return;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    
     if (!data) return alert('File missing in storage');
     const a = document.createElement('a');
     a.href = data;

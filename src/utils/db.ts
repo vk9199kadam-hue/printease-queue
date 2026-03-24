@@ -121,9 +121,9 @@ export const DB = {
   },
   saveFile(key: string, base64: string): void {
     try {
-      const files = JSON.parse(localStorage.getItem(KEYS.FILES) || '{}');
-      files[key] = base64;
-      localStorage.setItem(KEYS.FILES, JSON.stringify(files));
+      // Clear out localStorage files bucket to fix quota exceeded error permanently
+      localStorage.removeItem(KEYS.FILES);
+      
       // Background Sync to Supabase Storage Let it run asynchronously!
       import('./supabaseDb').then(m => m.SupabaseDB.saveFile(key, base64).catch(console.error));
     } catch (e) {
