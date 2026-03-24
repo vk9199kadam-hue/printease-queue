@@ -7,7 +7,7 @@ import { downloadFile } from '../../utils/fileStorage';
 export default function OrderConfirmed() {
   const navigate = useNavigate();
   const location = useLocation();
-  const order = (location.state as any)?.order as Order | undefined;
+  const order = (location.state as Record<string, unknown>)?.order as Order | undefined;
   const [copiedId, setCopiedId] = useState('');
 
   if (!order) { navigate('/student/dashboard'); return null; }

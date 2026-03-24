@@ -24,8 +24,8 @@ export default function ShopDashboard() {
   const prevCount = useRef(0);
 
   useEffect(() => {
-    const load = () => {
-      const paid = DB.getPaidOrders();
+    const load = async () => {
+      const paid = await DB.getPaidOrders();
       if (paid.length > prevCount.current && prevCount.current > 0) {
         playNotificationSound();
       }

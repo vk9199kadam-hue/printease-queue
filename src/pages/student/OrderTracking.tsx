@@ -27,8 +27,8 @@ export default function OrderTracking() {
 
   useEffect(() => {
     if (!order_id) return;
-    const load = () => {
-      const fresh = DB.getOrderById(order_id);
+    const load = async () => {
+      const fresh = await DB.getOrderById(order_id);
       if (fresh) {
         if (prevStatus.current && prevStatus.current !== fresh.print_status) {
           if (fresh.print_status === 'ready') playReadySound();

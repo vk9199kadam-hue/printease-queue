@@ -15,7 +15,7 @@ export default function OrderHistory() {
 
   useEffect(() => {
     if (!currentUser) return;
-    const load = () => setOrders(DB.getOrdersByStudentId(currentUser.id));
+    const load = async () => setOrders(await DB.getOrdersByStudentId(currentUser.id));
     load();
     const interval = setInterval(load, 10000);
     return () => clearInterval(interval);

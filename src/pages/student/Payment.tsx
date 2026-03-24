@@ -39,7 +39,7 @@ export default function Payment() {
 
     const tempId = 'ORD-' + Date.now();
     const qr = await generateQR(tempId);
-    const order = DB.createOrder({
+    const order = await DB.createOrder({
       student_id: currentUser.id,
       student_print_id: currentUser.student_print_id,
       student_name: currentUser.name,
@@ -55,9 +55,11 @@ export default function Payment() {
       print_status: 'queued',
       qr_code: qr,
     });
-    DB.updateOrderQR(order.order_id, qr);
-    playSuccessSound();
-    navigate('/student/confirmed', { state: { order } });
+    if (order) {
+      await DB.updateOrderQR(order.order_id, qr);
+      playSuccessSound();
+      navigate('/student/confirmed', { state: { order } });
+    }
   };
 
   return (

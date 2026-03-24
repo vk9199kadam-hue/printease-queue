@@ -10,8 +10,8 @@ export default function Profile() {
   const location = useLocation();
   const { login } = useAuth();
   
-  const email = (location.state as any)?.email;
-  const password = (location.state as any)?.password;
+  const email = (location.state as Record<string, unknown>)?.email as string | undefined;
+  const password = (location.state as Record<string, unknown>)?.password as string | undefined;
 
   const [name, setName] = useState('');
   const [gender, setGender] = useState('');
@@ -24,8 +24,8 @@ export default function Profile() {
     if (!name.trim()) { setError('Please enter your name'); return; }
     if (!gender) { setError('Please select your gender'); return; }
     setLoading(true);
-    const user = DB.createUser({ name: name.trim(), email, password, gender });
-    login(user, 'student');
+    const user = await DB.createUser({ name: name.trim(), email, password, gender });
+    if (user) login(user, 'student');
     playSuccessSound();
     await new Promise(r => setTimeout(r, 500));
     navigate('/student/dashboard');

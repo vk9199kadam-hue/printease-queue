@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const pool = new Pool({
@@ -16,6 +16,7 @@ const s3 = new S3Client({
 
 const BUCKET = process.env.AWS_BUCKET_NAME || 'printease-files';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
@@ -83,6 +84,24 @@ export default async function handler(req: any, res: any) {
       }
       case 'updateOrderStatus': {
         await pool.query('UPDATE orders SET print_status = $1 WHERE order_id = $2', [payload.print_status, payload.order_id]);
+        
+        if (payload.print_status === 'completed') {
+          try {
+            const { rows } = await pool.query('SELECT id FROM orders WHERE order_id = $1', [payload.order_id]);
+            if (rows.length > 0) {
+              const files = await pool.query('SELECT file_storage_key FROM order_files WHERE order_id = $1', [rows[0].id]);
+              for (const file of files.rows) {
+                if (file.file_storage_key) {
+                  const command = new DeleteObjectCommand({ Bucket: BUCKET, Key: file.file_storage_key });
+                  await s3.send(command).catch(e => console.error('S3 Delete Error:', e));
+                }
+              }
+            }
+          } catch (e) {
+            console.error('File cleanup error:', e);
+          }
+        }
+        
         return res.json({ data: true });
       }
       case 'getSubmissions': {
@@ -117,7 +136,9 @@ export default async function handler(req: any, res: any) {
         return res.json({ data: url });
       }
       case 'getDownloadUrl': {
-        return res.json({ data: `https://${BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${payload.key}` });
+        const command = new GetObjectCommand({ Bucket: BUCKET, Key: payload.key });
+        const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+        return res.json({ data: url });
       }
       case 'deleteFile': {
         const command = new DeleteObjectCommand({ Bucket: BUCKET, Key: payload.key });
@@ -127,8 +148,9 @@ export default async function handler(req: any, res: any) {
       default:
         return res.status(400).json({ error: 'Unknown action' });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
-    return res.status(500).json({ error: error.message });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return res.status(500).json({ error: (error as any).message });
   }
 }

@@ -22,7 +22,7 @@ export default function StudentLogin() {
     setLoading(true);
     await new Promise(r => setTimeout(r, 400));
     
-    const user = DB.getUserByEmail(email.toLowerCase());
+    const user = await DB.getUserByEmail(email.toLowerCase());
     if (user) {
       setStep(2);
     } else {
@@ -40,7 +40,7 @@ export default function StudentLogin() {
     setLoading(true);
     await new Promise(r => setTimeout(r, 500));
     
-    const user = DB.getUserByEmail(email.toLowerCase());
+    const user = await DB.getUserByEmail(email.toLowerCase());
     if (user && user.password === password) {
       login(user, 'student');
       navigate('/student/dashboard');

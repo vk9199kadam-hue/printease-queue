@@ -15,37 +15,37 @@ export default function OrderDetail() {
 
   useEffect(() => {
     if (!order_id) return;
-    setOrder(DB.getOrderById(order_id));
+    DB.getOrderById(order_id).then(setOrder).catch(console.error);
   }, [order_id]);
 
   if (!order) return <div className="min-h-screen flex items-center justify-center bg-secondary"><p className="text-muted-foreground">Loading...</p></div>;
 
-  const nextStatus = () => {
+  const nextStatus = async () => {
     const currentIdx = statusFlow.indexOf(order.print_status);
     if (currentIdx < statusFlow.length - 1) {
       const next = statusFlow[currentIdx + 1];
-      const updated = DB.updateOrderStatus(order.order_id, next);
-      if (updated) setOrder(updated);
+      await DB.updateOrderStatus(order.order_id, next);
+      if (order_id) {
+        const updated = await DB.getOrderById(order_id);
+        if (updated) setOrder(updated);
+      }
     }
   };
 
   const handleDownloadAndPrint = () => {
     order.files.forEach((file, index) => {
       setTimeout(async () => {
-        const base64 = DB.getFile(file.file_storage_key);
-        if (base64) {
-          const a = document.createElement('a');
-          a.href = base64;
-          a.download = file.file_name;
-          a.click();
-        } else {
-          try {
-            const { SupabaseDB } = await import('../../utils/supabaseDb');
-            const url = await SupabaseDB.getFile(file.file_storage_key);
-            if (url) window.open(url, '_blank');
-          } catch (e) {
-            console.error('Failed to download file', e);
+        try {
+          const fileUrl = await DB.getFile(file.file_storage_key);
+          if (fileUrl) {
+            const a = document.createElement('a');
+            a.href = fileUrl;
+            a.target = '_blank';
+            a.download = file.file_name;
+            a.click();
           }
+        } catch (e) {
+          console.error('Failed to download file', e);
         }
       }, index * 1000);
     });

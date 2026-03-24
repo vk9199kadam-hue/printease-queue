@@ -20,7 +20,7 @@ export default function ShopLogin() {
     setLoading(true);
     setError('');
     await new Promise(r => setTimeout(r, 500));
-    const shop = DB.verifyShopkeeper(email, password);
+    const shop = await DB.verifyShopkeeper(email, password);
     if (shop) {
       login(shop, 'shopkeeper');
       navigate('/shop/dashboard');

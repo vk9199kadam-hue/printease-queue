@@ -24,8 +24,8 @@ export default function SubmissionsInbox() {
   const [noticeType, setNoticeType] = useState<NoticeType>('acknowledgment');
 
   useEffect(() => {
-    const load = () => {
-      setSubmissions(DB.getSubmissions());
+    const load = async () => {
+      setSubmissions(await DB.getSubmissions());
     };
     load();
     const interval = setInterval(load, 5000);
@@ -43,38 +43,32 @@ export default function SubmissionsInbox() {
 
   const handleLogout = () => { logout(); navigate('/'); };
 
-  const handleStatusChange = (id: string, status: Submission['validation_status']) => {
-    DB.updateSubmissionStatus(id, status);
-    setSubmissions(DB.getSubmissions());
+  const handleStatusChange = async (id: string, status: Submission['validation_status']) => {
+    await DB.updateSubmissionStatus(id, status);
+    setSubmissions(await DB.getSubmissions());
   };
 
-  const handleAddNotice = (id: string) => {
+  const handleAddNotice = async (id: string) => {
     if (!noticeText.trim()) return;
-    DB.addNoticeToSubmission(id, noticeType, noticeText);
+    await DB.addNoticeToSubmission(id, noticeType, noticeText);
     setNoticeText('');
-    setSubmissions(DB.getSubmissions());
+    setSubmissions(await DB.getSubmissions());
   };
 
   const downloadDoc = async (key: string, name: string) => {
-    let data = DB.getFile(key);
-    if (!data) {
-      try {
-        const { SupabaseDB } = await import('../../utils/supabaseDb');
-        const url = await SupabaseDB.getFile(key);
-        if (url) {
-          window.open(url, '_blank');
-          return;
-        }
-      } catch (e) {
-        console.error(e);
-      }
+    try {
+      const fileUrl = await DB.getFile(key);
+      if (!fileUrl) return alert('File missing in storage');
+      
+      const a = document.createElement('a');
+      a.href = fileUrl;
+      a.target = '_blank';
+      a.download = name;
+      a.click();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to securely access file');
     }
-    
-    if (!data) return alert('File missing in storage');
-    const a = document.createElement('a');
-    a.href = data;
-    a.download = name;
-    a.click();
   };
 
   const statusColors: Record<string, string> = {
@@ -206,7 +200,7 @@ export default function SubmissionsInbox() {
                             <label className="text-xs text-muted-foreground block mb-1">Update Status:</label>
                             <select
                               value={sub.validation_status}
-                              onChange={e => handleStatusChange(sub.submission_id, e.target.value as any)}
+                              onChange={e => handleStatusChange(sub.submission_id, e.target.value as unknown as Submission['validation_status'])}
                               className="w-full text-sm p-1.5 rounded border border-input bg-background"
                             >
                               <option value="received">Received</option>
@@ -221,7 +215,7 @@ export default function SubmissionsInbox() {
                             <label className="text-xs text-muted-foreground block mb-1">Write Official Notice:</label>
                             <select
                               value={noticeType}
-                              onChange={e => setNoticeType(e.target.value as any)}
+                              onChange={e => setNoticeType(e.target.value as unknown as NoticeType)}
                               className="w-full text-sm p-1.5 rounded border border-input bg-background mb-2"
                             >
                               <option value="acknowledgment">Acknowledgment</option>

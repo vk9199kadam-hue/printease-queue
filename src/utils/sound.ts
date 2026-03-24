@@ -1,5 +1,6 @@
 export function playNotificationSound(frequency = 880, duration = 0.6): void {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioCtx) return;
     const ctx = new AudioCtx();
@@ -13,7 +14,9 @@ export function playNotificationSound(frequency = 880, duration = 0.6): void {
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + duration);
-  } catch {}
+  } catch {
+    // Ignore error
+  }
 }
 
 export function playSuccessSound(): void {

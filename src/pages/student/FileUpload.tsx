@@ -30,7 +30,7 @@ export default function FileUpload() {
     const key = generateStorageKey(file.name);
     try {
       const base64 = await fileToBase64(file);
-      DB.saveFile(key, base64);
+      await DB.saveFile(key, base64);
       const pageCount = await getPageCount(file);
       const fileType = getFileType(file.name);
       const ext = file.name.split('.').pop() || '';
@@ -57,9 +57,9 @@ export default function FileUpload() {
     }
   };
 
-  const removeFile = (temp_id: string) => {
+  const removeFile = async (temp_id: string) => {
     const file = uploadedFiles.find(f => f.temp_id === temp_id);
-    if (file) DB.deleteFile(file.file_storage_key);
+    if (file) await DB.deleteFile(file.file_storage_key);
     setUploadedFiles(prev => prev.filter(f => f.temp_id !== temp_id));
   };
 

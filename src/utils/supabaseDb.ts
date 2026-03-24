@@ -1,6 +1,6 @@
 import { User, Shopkeeper, Order, Pricing, Session, Submission, Notice } from '../types';
 
-async function rpc(action: string, payload: any = {}) {
+async function rpc(action: string, payload: Record<string, unknown> = {}) {
   const res = await fetch('/api/rpc', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -46,7 +46,7 @@ export const SupabaseDB = {
     return await rpc('getOrdersByStudentId', { student_id }).catch(() => []);
   },
 
-  async createOrder(data: any): Promise<Order | null> {
+  async createOrder(data: Record<string, unknown>): Promise<Order | null> {
     const year = new Date().getFullYear();
     const count = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
     data.order_id = `ORD-${year}-${count}`;
@@ -61,7 +61,7 @@ export const SupabaseDB = {
     return await rpc('getSubmissions').catch(() => []);
   },
 
-  async createSubmission(data: any): Promise<Submission | null> {
+  async createSubmission(data: Record<string, unknown>): Promise<Submission | null> {
     const year = new Date().getFullYear();
     const count = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
     data.submission_id = `SUB-${year}-${count}`;

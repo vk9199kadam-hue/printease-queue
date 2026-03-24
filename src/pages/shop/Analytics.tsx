@@ -6,10 +6,17 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 export default function Analytics() {
   const navigate = useNavigate();
-  const [analytics, setAnalytics] = useState(DB.getTodayAnalytics());
+  const [analytics, setAnalytics] = useState({
+    total_orders: 0, total_pages: 0, total_revenue: 0,
+    bw_pages: 0, color_pages: 0, queued: 0, printing: 0, ready: 0, completed: 0
+  });
 
   useEffect(() => {
-    const interval = setInterval(() => setAnalytics(DB.getTodayAnalytics()), 5000);
+    const load = () => {
+      DB.getTodayAnalytics().then(setAnalytics).catch(console.error);
+    };
+    load();
+    const interval = setInterval(load, 5000);
     return () => clearInterval(interval);
   }, []);
 
