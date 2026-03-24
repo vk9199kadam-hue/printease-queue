@@ -82,3 +82,4 @@ CREATE TABLE notices (
     created_at TIMESTAMP DEFAULT current_timestamp()
 );
 CREATE TABLE IF NOT EXISTS file_storage (key VARCHAR(255) PRIMARY KEY, file_data TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP); 
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qr_code TEXT; 

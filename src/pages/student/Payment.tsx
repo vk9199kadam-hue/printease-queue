@@ -44,7 +44,8 @@ export default function Payment() {
       student_id: currentUser.id,
       student_print_id: currentUser.student_print_id,
       student_name: currentUser.name,
-      files: filesWithPrices,
+      // Remove the base64 string from the file list to avoid hitting Vercel's 4.5MB request limit
+      files: filesWithPrices.map(({ base64, ...rest }) => rest),
       total_bw_pages: filesWithPrices.reduce((s, f) => s + f.bw_pages, 0),
       total_color_pages: filesWithPrices.reduce((s, f) => s + f.color_pages, 0),
       total_pages: filesWithPrices.reduce((s, f) => s + (f.page_count * f.copies), 0),
@@ -57,9 +58,8 @@ export default function Payment() {
       qr_code: qr,
     });
     if (order) {
-      await DB.updateOrderQR(order.order_id, qr);
       playSuccessSound();
-      navigate('/student/confirmed', { state: { order } });
+      navigate('/student/confirmed', { state: { order: { ...order, qr_code: qr } } });
     } else {
       setProcessing(false);
       setError('Database error. If you registered earlier, try logging out and logging back in.');
