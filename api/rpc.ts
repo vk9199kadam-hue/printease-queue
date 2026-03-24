@@ -1,16 +1,8 @@
 import { Pool } from 'pg';
-import { createClient } from '@supabase/supabase-js';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
-
-const supabase = createClient(
-  'https://iizvinwuzbidsigqeguj.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpenZpbnd1emJpZHNpZ3FlZ3VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyODY1NjgsImV4cCI6MjA4OTg2MjU2OH0.iBVego3vvd7I4BjVo5S-MBojhEJqN7W6BNx5TU9mAWM'
-);
-
-const BUCKET = 'printease-files';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
@@ -88,7 +80,7 @@ export default async function handler(req: any, res: any) {
               const files = await pool.query('SELECT file_storage_key FROM order_files WHERE order_id = $1', [rows[0].id]);
               for (const file of files.rows) {
                 if (file.file_storage_key) {
-                  await supabase.storage.from(BUCKET).remove([file.file_storage_key]).catch(e => console.error('Supabase Delete Error:', e));
+                  await pool.query('DELETE FROM file_storage WHERE key = $1', [file.file_storage_key]).catch(e => console.error('DB Delete Error:', e));
                 }
               }
             }
@@ -125,19 +117,16 @@ export default async function handler(req: any, res: any) {
         await pool.query('INSERT INTO notices (submission_id, type, message) VALUES ($1, $2, $3)', [rows[0].id, payload.type, payload.message]);
         return res.json({ data: true });
       }
-      case 'getUploadUrl': {
-        const { data, error } = await supabase.storage.from(BUCKET).createSignedUploadUrl(payload.key);
-        if (error) throw error;
-        return res.json({ data: data.signedUrl });
+      case 'uploadFile': {
+        await pool.query('INSERT INTO file_storage (key, file_data) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET file_data = EXCLUDED.file_data', [payload.key, payload.base64]);
+        return res.json({ data: true });
       }
-      case 'getDownloadUrl': {
-        const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(payload.key, 3600);
-        if (error) throw error;
-        return res.json({ data: data.signedUrl });
+      case 'downloadFile': {
+        const { rows } = await pool.query('SELECT file_data FROM file_storage WHERE key = $1', [payload.key]);
+        return res.json({ data: rows[0]?.file_data || null });
       }
       case 'deleteFile': {
-        const { error } = await supabase.storage.from(BUCKET).remove([payload.key]);
-        if (error) throw error;
+        await pool.query('DELETE FROM file_storage WHERE key = $1', [payload.key]);
         return res.json({ data: true });
       }
       default:

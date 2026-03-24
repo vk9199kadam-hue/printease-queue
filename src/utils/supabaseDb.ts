@@ -79,17 +79,7 @@ export const SupabaseDB = {
 
   async saveFile(key: string, base64: string): Promise<string | null> {
     try {
-      const fetchResponse = await fetch(base64);
-      const blob = await fetchResponse.blob();
-      
-      const uploadUrl = await rpc('getUploadUrl', { key, contentType: blob.type });
-      if (!uploadUrl) throw new Error("Could not fetch presigned URL");
-
-      await fetch(uploadUrl, {
-        method: 'PUT',
-        body: blob,
-        headers: { 'Content-Type': blob.type },
-      });
+      await rpc('uploadFile', { key, base64 });
       return key;
     } catch (e) {
       console.error(e);
@@ -99,7 +89,7 @@ export const SupabaseDB = {
 
   async getFile(key: string): Promise<string | null> {
     try {
-      return await rpc('getDownloadUrl', { key });
+      return await rpc('downloadFile', { key });
     } catch (e) {
       return null;
     }
