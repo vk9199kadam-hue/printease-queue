@@ -20,14 +20,18 @@ export default function ShopLogin() {
     setLoading(true);
     setError('');
     await new Promise(r => setTimeout(r, 500));
-    const shop = await DB.verifyShopkeeper(email, password);
-    if (shop) {
-      login(shop, 'shopkeeper');
-      navigate('/shop/dashboard');
-    } else {
-      setError('Incorrect email or password');
-      setShaking(true);
-      setTimeout(() => setShaking(false), 500);
+    try {
+      const shop = await DB.verifyShopkeeper(email, password);
+      if (shop) {
+        login(shop, 'shopkeeper');
+        navigate('/shop/dashboard');
+      } else {
+        setError('Incorrect email or password');
+        setShaking(true);
+        setTimeout(() => setShaking(false), 500);
+      }
+    } catch (err) {
+      setError('Database connection error. Are you on Vercel?');
     }
     setLoading(false);
   };
