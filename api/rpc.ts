@@ -24,6 +24,15 @@ export default async function handler(req: any, res: any) {
         const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [payload.email]);
         return res.json({ data: rows[0] || null });
       }
+      case 'getOrderById': {
+        const { rows } = await pool.query('SELECT * FROM orders WHERE order_id = $1', [payload.id]);
+        if (rows.length > 0) {
+          const files = await pool.query('SELECT * FROM order_files WHERE order_id = $1', [rows[0].id]);
+          rows[0].files = files.rows;
+          rows[0].extra_services = { spiral_binding: !!rows[0].spiral_binding, stapling: !!rows[0].stapling };
+        }
+        return res.json({ data: rows[0] || null });
+      }
       case 'createUser': {
         const { name, email, password, gender, student_print_id, is_verified } = payload;
         const result = await pool.query(
@@ -41,6 +50,7 @@ export default async function handler(req: any, res: any) {
         for (const order of rows) {
           const files = await pool.query('SELECT * FROM order_files WHERE order_id = $1', [order.id]);
           order.files = files.rows;
+          order.extra_services = { spiral_binding: !!order.spiral_binding, stapling: !!order.stapling };
         }
         return res.json({ data: rows });
       }
@@ -49,6 +59,7 @@ export default async function handler(req: any, res: any) {
         for (const order of rows) {
           const files = await pool.query('SELECT * FROM order_files WHERE order_id = $1', [order.id]);
           order.files = files.rows;
+          order.extra_services = { spiral_binding: !!order.spiral_binding, stapling: !!order.stapling };
         }
         return res.json({ data: rows });
       }
