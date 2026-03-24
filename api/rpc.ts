@@ -1,18 +1,14 @@
 import { Pool } from 'pg';
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { createClient } from '@supabase/supabase-js';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-const s3 = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
-});
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL || 'https://iizvinwuzbidsigqeguj.supabase.co',
+  process.env.VITE_SUPABASE_ANON_KEY || ''
+);
 
 const BUCKET = process.env.AWS_BUCKET_NAME || 'printease-files';
 
@@ -92,8 +88,7 @@ export default async function handler(req: any, res: any) {
               const files = await pool.query('SELECT file_storage_key FROM order_files WHERE order_id = $1', [rows[0].id]);
               for (const file of files.rows) {
                 if (file.file_storage_key) {
-                  const command = new DeleteObjectCommand({ Bucket: BUCKET, Key: file.file_storage_key });
-                  await s3.send(command).catch(e => console.error('S3 Delete Error:', e));
+                  await supabase.storage.from(BUCKET).remove([file.file_storage_key]).catch(e => console.error('Supabase Delete Error:', e));
                 }
               }
             }
@@ -131,18 +126,18 @@ export default async function handler(req: any, res: any) {
         return res.json({ data: true });
       }
       case 'getUploadUrl': {
-        const command = new PutObjectCommand({ Bucket: BUCKET, Key: payload.key, ContentType: payload.contentType });
-        const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
-        return res.json({ data: url });
+        const { data, error } = await supabase.storage.from(BUCKET).createSignedUploadUrl(payload.key);
+        if (error) throw error;
+        return res.json({ data: data.signedUrl });
       }
       case 'getDownloadUrl': {
-        const command = new GetObjectCommand({ Bucket: BUCKET, Key: payload.key });
-        const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
-        return res.json({ data: url });
+        const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(payload.key, 3600);
+        if (error) throw error;
+        return res.json({ data: data.signedUrl });
       }
       case 'deleteFile': {
-        const command = new DeleteObjectCommand({ Bucket: BUCKET, Key: payload.key });
-        await s3.send(command);
+        const { error } = await supabase.storage.from(BUCKET).remove([payload.key]);
+        if (error) throw error;
         return res.json({ data: true });
       }
       default:
