@@ -6,11 +6,11 @@ const pool = new Pool({
 });
 
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL || 'https://iizvinwuzbidsigqeguj.supabase.co',
-  process.env.VITE_SUPABASE_ANON_KEY || ''
+  'https://iizvinwuzbidsigqeguj.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpenZpbnd1emJpZHNpZ3FlZ3VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyODY1NjgsImV4cCI6MjA4OTg2MjU2OH0.iBVego3vvd7I4BjVo5S-MBojhEJqN7W6BNx5TU9mAWM'
 );
 
-const BUCKET = process.env.AWS_BUCKET_NAME || 'printease-files';
+const BUCKET = 'printease-files';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
