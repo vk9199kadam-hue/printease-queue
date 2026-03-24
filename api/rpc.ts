@@ -53,10 +53,10 @@ export default async function handler(req: any, res: any) {
         return res.json({ data: rows });
       }
       case 'createOrder': {
-        const { order_id, student_id, student_print_id, student_name, total_bw_pages, total_color_pages, total_pages, spiral_binding, stapling, service_fee, subtotal, total_amount, payment_status, print_status, files } = payload;
+        const { order_id, student_id, student_print_id, student_name, total_bw_pages, total_color_pages, total_pages, extra_services, service_fee, subtotal, total_amount, payment_status, print_status, files } = payload;
         const result = await pool.query(
           'INSERT INTO orders (order_id, student_id, student_print_id, student_name, total_bw_pages, total_color_pages, total_pages, spiral_binding, stapling, service_fee, subtotal, total_amount, payment_status, print_status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *',
-          [order_id, student_id, student_print_id, student_name, total_bw_pages, total_color_pages, total_pages, spiral_binding, stapling, service_fee, subtotal, total_amount, payment_status, print_status]
+          [order_id, student_id, student_print_id, student_name, total_bw_pages, total_color_pages, total_pages, extra_services?.spiral_binding, extra_services?.stapling, service_fee, subtotal, total_amount, payment_status, print_status]
         );
         const newOrder = result.rows[0];
         

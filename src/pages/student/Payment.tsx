@@ -18,6 +18,7 @@ export default function Payment() {
   const [processing, setProcessing] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState('');
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState('');
 
   if (!state || !currentUser) { navigate('/student/upload'); return null; }
 
@@ -59,6 +60,9 @@ export default function Payment() {
       await DB.updateOrderQR(order.order_id, qr);
       playSuccessSound();
       navigate('/student/confirmed', { state: { order } });
+    } else {
+      setProcessing(false);
+      setError('Database error. If you registered earlier, try logging out and logging back in.');
     }
   };
 
@@ -75,6 +79,7 @@ export default function Payment() {
             <div className="w-full bg-secondary rounded-full h-2">
               <div className="bg-blue-primary h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
             </div>
+            {error && <p className="text-destructive text-sm mt-4 font-semibold">{error}</p>}
           </div>
         </div>
       )}
@@ -133,6 +138,8 @@ export default function Payment() {
             <Lock size={12} /> Demo mode — no real payment processed
           </div>
         </div>
+
+        {error && <p className="text-red-500 text-sm text-center font-bold px-4">{error}</p>}
 
         <button
           onClick={handlePay}
