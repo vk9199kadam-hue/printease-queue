@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Printer, CheckCircle, Package } from 'lucide-react';
 import { DB } from '../../utils/db';
-import { Order } from '../../types';
+import { Order, FileItem } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 import FileTypeIcon from '../../components/FileTypeIcon';
+import { Download } from 'lucide-react';
 
 const statusFlow: Order['print_status'][] = ['queued', 'printing', 'ready', 'completed'];
 
@@ -19,6 +20,21 @@ export default function OrderDetail() {
   }, [order_id]);
 
   if (!order) return <div className="min-h-screen flex items-center justify-center bg-secondary"><p className="text-muted-foreground">Loading...</p></div>;
+
+  const downloadSingleFile = async (file: FileItem) => {
+    try {
+      const fileUrl = await DB.getFile(file.file_storage_key);
+      if (fileUrl) {
+        const a = document.createElement('a');
+        a.href = fileUrl;
+        a.target = '_blank';
+        a.download = file.file_name;
+        a.click();
+      }
+    } catch (e) {
+      console.error('Failed to download file', e);
+    }
+  };
 
   const nextStatus = async () => {
     const currentIdx = statusFlow.indexOf(order.print_status);
@@ -102,9 +118,22 @@ export default function OrderDetail() {
                 <p className="text-xs text-muted-foreground">
                   {f.page_count}pg · {f.print_type} · ×{f.copies} · {f.sides}
                 </p>
-                {f.student_note && <p className="text-xs text-amber-600 mt-1">📝 {f.student_note}</p>}
+                {f.student_note && (
+                  <div className="mt-2 p-2 rounded bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800 animate-pulse">
+                    ⚠️ SPECIAL NOTE: {f.student_note}
+                  </div>
+                )}
               </div>
-              <span className="text-sm font-semibold text-foreground">₹{f.file_price}</span>
+              <div className="flex flex-col items-end gap-2 text-right">
+                <span className="text-sm font-semibold text-foreground">₹{f.file_price}</span>
+                <button
+                  onClick={() => downloadSingleFile(f)}
+                  className="p-2 rounded-lg bg-blue-light text-blue-primary hover:bg-blue-primary hover:text-white transition shadow-sm border border-blue-200 flex items-center gap-1 text-[10px] font-bold"
+                  title="Download this file"
+                >
+                  <Download size={14} /> DOWNLOAD
+                </button>
+              </div>
             </div>
           ))}
         </div>
