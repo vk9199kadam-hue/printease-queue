@@ -9,9 +9,15 @@ export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
   const { action, payload } = req.body;
-  const client = await pool.connect();
+  console.log(`RPC [${action}] Started - Timestamp: ${Date.now()}`);
 
+  const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Database Connection Timeout - Possible Sleepy Cluster')), 5000));
+  
+  let client;
   try {
+    client = await Promise.race([pool.connect(), timeoutPromise]) as any;
+    console.log(`RPC [${action}] Connected to DB`);
+    
     switch (action) {
       case 'getUsers': {
         const { rows } = await client.query('SELECT * FROM users');
@@ -149,6 +155,6 @@ export default async function handler(req: any, res: any) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return res.status(500).json({ error: (error as any).message });
   } finally {
-    client.release();
+    if (client) client.release();
   }
 }

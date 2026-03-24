@@ -1,11 +1,12 @@
 import { User, Shopkeeper, Order, Pricing, Session, Submission, Notice } from '../types';
 
 async function rpc(action: string, payload: Record<string, unknown> = {}) {
-  const res = await fetch('/api/rpc', {
+  const res = await fetch(`/api/rpc?t=${Date.now()}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
     body: JSON.stringify({ action, payload })
   });
+  console.log(`RPC [${action}]: Response received`);
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'API Error');
   return data.data;
