@@ -25,7 +25,13 @@ export default function Profile() {
     if (!gender) { setError('Please select your gender'); return; }
     setLoading(true);
     const user = await DB.createUser({ name: name.trim(), email, password, gender });
-    if (user) login(user, 'student');
+    if (!user) {
+      setError('Database connection error. Are you on Vercel?');
+      setLoading(false);
+      return;
+    }
+    
+    login(user, 'student');
     playSuccessSound();
     await new Promise(r => setTimeout(r, 500));
     navigate('/student/dashboard');
