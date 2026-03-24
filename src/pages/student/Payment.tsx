@@ -59,7 +59,7 @@ export default function Payment() {
     });
     if (order) {
       playSuccessSound();
-      navigate('/student/confirmed', { state: { order: { ...order, qr_code: qr } } });
+      navigate('/student/confirmed', { state: { order: { ...order, qr_code: qr } }, replace: true });
     } else {
       setProcessing(false);
       setError('Database error. If you registered earlier, try logging out and logging back in.');

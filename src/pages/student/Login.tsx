@@ -6,12 +6,16 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function StudentLogin() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { session, login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [step, setStep] = useState(1); // 1: Email, 2: Login Password, 3: Signup Password
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  React.useEffect(() => {
+    if (session?.role === 'student') navigate('/student/dashboard', { replace: true });
+  }, [session, navigate]);
 
   const handleEmailNext = async () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -43,7 +47,7 @@ export default function StudentLogin() {
     const user = await DB.getUserByEmail(email.toLowerCase());
     if (user && user.password === password) {
       login(user, 'student');
-      navigate('/student/dashboard');
+      navigate('/student/dashboard', { replace: true });
     } else {
       setError('Incorrect password');
       setLoading(false);

@@ -6,13 +6,17 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function ShopLogin() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { session, login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [shaking, setShaking] = useState(false);
+
+  React.useEffect(() => {
+    if (session?.role === 'shopkeeper') navigate('/shop/dashboard', { replace: true });
+  }, [session, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +28,7 @@ export default function ShopLogin() {
       const shop = await DB.verifyShopkeeper(email, password);
       if (shop) {
         login(shop, 'shopkeeper');
-        navigate('/shop/dashboard');
+        navigate('/shop/dashboard', { replace: true });
       } else {
         setError('Incorrect email or password');
         setShaking(true);
