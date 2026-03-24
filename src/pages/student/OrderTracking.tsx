@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Upload, CreditCard, Clock, Printer, Bell, CheckCircle } from 'lucide-react';
+import { useNavigate, useParams, Navigate } from 'react-router-dom';
+import { ArrowLeft, Upload, CreditCard, Clock, Printer, Bell, CheckCircle, Loader2 } from 'lucide-react';
 import { DB } from '../../utils/db';
 import { Order } from '../../types';
 import { playReadySound } from '../../utils/sound';
@@ -23,26 +23,67 @@ export default function OrderTracking() {
   const navigate = useNavigate();
   const { order_id } = useParams();
   const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
   const prevStatus = useRef('');
 
   useEffect(() => {
     if (!order_id) return;
+    let isMounted = true;
+    
     const load = async () => {
-      const fresh = await DB.getOrderById(order_id);
-      if (fresh) {
-        if (prevStatus.current && prevStatus.current !== fresh.print_status) {
-          if (fresh.print_status === 'ready') playReadySound();
+      try {
+        const fresh = await DB.getOrderById(order_id);
+        if (!isMounted) return;
+        if (fresh) {
+          if (prevStatus.current && prevStatus.current !== fresh.print_status) {
+            if (fresh.print_status === 'ready') playReadySound();
+          }
+          prevStatus.current = fresh.print_status;
+          setOrder(fresh);
+          setError('');
+        } else {
+          setError('Order not found');
         }
-        prevStatus.current = fresh.print_status;
-        setOrder(fresh);
+      } catch (err) {
+        if (!isMounted) return;
+        setError('Connection lost. Retrying...');
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
-    load();
-    const interval = setInterval(load, 3000);
-    return () => clearInterval(interval);
-  }, [order_id]);
 
-  if (!order) return <div className="min-h-screen flex items-center justify-center bg-secondary"><p className="text-muted-foreground">Loading...</p></div>;
+    load();
+    const interval = setInterval(load, 5000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [order_id, retryCount]);
+
+  if (loading && !order) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-secondary">
+      <Loader2 className="animate-spin text-blue-primary mb-4" size={32} />
+      <p className="text-muted-foreground font-syne">Connecting to queue...</p>
+    </div>
+  );
+
+  if (error && !order) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-secondary p-4 text-center">
+      <div className="bg-card p-8 rounded-2xl border border-input shadow-sm max-w-sm">
+        <p className="text-destructive font-semibold mb-4">{error}</p>
+        <button 
+          onClick={() => setRetryCount(prev => prev + 1)}
+          className="w-full py-2 rounded-xl bg-blue-primary text-primary-foreground font-semibold"
+        >
+          Retry Connection
+        </button>
+      </div>
+    </div>
+  );
+
+  if (!order) return <Navigate to="/student/dashboard" replace />;
 
   const activeStep = getActiveStep(order.print_status);
 

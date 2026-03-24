@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Printer, CheckCircle, Package } from 'lucide-react';
+import { useNavigate, useParams, Navigate } from 'react-router-dom';
+import { ArrowLeft, Printer, CheckCircle, Package, Loader2, Download } from 'lucide-react';
 import { DB } from '../../utils/db';
 import { Order, FileItem } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 import FileTypeIcon from '../../components/FileTypeIcon';
-import { Download } from 'lucide-react';
 
 const statusFlow: Order['print_status'][] = ['queued', 'printing', 'ready', 'completed'];
 
@@ -13,13 +12,64 @@ export default function OrderDetail() {
   const navigate = useNavigate();
   const { order_id } = useParams();
   const [order, setOrder] = useState<Order | null>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!order_id) return;
-    DB.getOrderById(order_id).then(setOrder).catch(console.error);
+    setLoading(true);
+    setError('');
+    
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      if (!order) {
+        setError('Request timed out. The server might be busy.');
+        setLoading(false);
+      }
+    }, 15000);
+
+    DB.getOrderById(order_id)
+      .then(res => {
+        clearTimeout(timeout);
+        if (res) setOrder(res);
+        else setError('Order not found');
+        setLoading(false);
+      })
+      .catch(err => {
+        clearTimeout(timeout);
+        setError('Failed to connect to database');
+        setLoading(false);
+        console.error(err);
+      });
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, [order_id]);
 
-  if (!order) return <div className="min-h-screen flex items-center justify-center bg-secondary"><p className="text-muted-foreground">Loading...</p></div>;
+  if (loading) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-secondary">
+      <Loader2 className="animate-spin text-blue-primary mb-4" size={32} />
+      <p className="text-muted-foreground">Fetching order details...</p>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-secondary p-4 text-center">
+      <div className="bg-card p-8 rounded-2xl border border-input shadow-sm max-w-sm">
+        <p className="text-destructive font-semibold mb-4">{error}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="w-full py-2 rounded-xl bg-blue-primary text-primary-foreground font-semibold"
+        >
+          Retry Connection
+        </button>
+      </div>
+    </div>
+  );
+
+  if (!order) return <Navigate to="/shop/dashboard" replace />;
 
   const downloadSingleFile = async (file: FileItem) => {
     try {
