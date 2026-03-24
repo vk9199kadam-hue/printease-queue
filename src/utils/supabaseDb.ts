@@ -209,5 +209,14 @@ export const SupabaseDB = {
   async getFile(key: string): Promise<string | null> {
     const { data } = supabase.storage.from('printease_files').getPublicUrl(key);
     return data.publicUrl || null;
+  },
+
+  async deleteFile(key: string): Promise<boolean> {
+    const { error } = await supabase.storage.from('printease_files').remove([key]);
+    if (error) {
+      console.error("Storage delete error:", error);
+      return false;
+    }
+    return true;
   }
 };

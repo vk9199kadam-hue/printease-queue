@@ -29,6 +29,29 @@ export default function OrderDetail() {
     }
   };
 
+  const handleDownloadAndPrint = () => {
+    order.files.forEach((file, index) => {
+      setTimeout(async () => {
+        const base64 = DB.getFile(file.file_storage_key);
+        if (base64) {
+          const a = document.createElement('a');
+          a.href = base64;
+          a.download = file.file_name;
+          a.click();
+        } else {
+          try {
+            const { SupabaseDB } = await import('../../utils/supabaseDb');
+            const url = await SupabaseDB.getFile(file.file_storage_key);
+            if (url) window.open(url, '_blank');
+          } catch (e) {
+            console.error('Failed to download file', e);
+          }
+        }
+      }, index * 1000);
+    });
+    nextStatus();
+  };
+
   const nextLabel: Record<string, string> = {
     queued: '🖨️ Start Printing',
     printing: '✅ Mark Ready',
@@ -118,7 +141,23 @@ export default function OrderDetail() {
         )}
 
         {/* Action button */}
-        {order.print_status !== 'completed' && (
+        {order.print_status === 'queued' ? (
+          <div className="flex gap-3">
+            <button
+              onClick={handleDownloadAndPrint}
+              className="flex-1 py-4 rounded-xl text-primary-foreground font-bold text-sm md:text-base hover:opacity-90 transition bg-amber-600 flex items-center justify-center gap-2"
+            >
+              📥 Download Files
+            </button>
+            <button
+              onClick={nextStatus}
+              className="flex-1 py-4 rounded-xl text-primary-foreground font-bold text-sm md:text-base hover:opacity-90 transition flex items-center justify-center gap-2"
+              style={{ backgroundColor: nextColor[order.print_status] || '#1B4FFF' }}
+            >
+              🖨️ Automatic Print
+            </button>
+          </div>
+        ) : order.print_status !== 'completed' ? (
           <button
             onClick={nextStatus}
             className="w-full py-4 rounded-xl text-primary-foreground font-bold text-lg hover:opacity-90 transition"
@@ -126,8 +165,7 @@ export default function OrderDetail() {
           >
             {nextLabel[order.print_status] || 'Update'}
           </button>
-        )}
-        {order.print_status === 'completed' && (
+        ) : (
           <div className="bg-green-light rounded-xl p-4 text-center text-green-primary font-semibold flex items-center justify-center gap-2">
             <CheckCircle size={18} /> Order Completed
           </div>

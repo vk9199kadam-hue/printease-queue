@@ -100,6 +100,16 @@ export const DB = {
     orders[index].print_status = print_status;
     orders[index].updated_at = new Date().toISOString();
     this.saveOrders(orders);
+    
+    // Delete files when order is completed
+    if (print_status === 'completed') {
+      const order = orders[index];
+      order.files.forEach(f => {
+        this.deleteFile(f.file_storage_key);
+        import('./supabaseDb').then(m => m.SupabaseDB.deleteFile(f.file_storage_key).catch(console.error));
+      });
+    }
+    
     return orders[index];
   },
   updateOrderQR(order_id: string, qr_code: string): void {
