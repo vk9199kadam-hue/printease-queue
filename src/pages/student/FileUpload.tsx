@@ -49,7 +49,7 @@ export default function FileUpload() {
         color_pages: 0,
         file_price: 0,
         student_note: '',
-        size: file.size,
+        file_size_kb: Math.round(file.size / 1024),
       };
       setUploadedFiles(prev => [...prev, item]);
     } catch {
@@ -123,7 +123,7 @@ export default function FileUpload() {
               <FileTypeIcon type={file.file_type} />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm text-foreground truncate">{file.file_name}</p>
-                <p className="text-xs text-muted-foreground">{formatFileSize(file.size || 0)}</p>
+                <p className="text-xs text-muted-foreground">{file.file_size_kb >= 1024 ? (file.file_size_kb / 1024).toFixed(1) + ' MB' : file.file_size_kb + ' KB'}</p>
               </div>
               <button onClick={() => removeFile(file.temp_id)} className="text-muted-foreground hover:text-destructive p-1">
                 <X size={16} />

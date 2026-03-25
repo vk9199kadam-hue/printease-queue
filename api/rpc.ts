@@ -87,8 +87,8 @@ export default async function handler(req: any, res: any) {
         if (files && files.length > 0) {
           for (const file of files) {
             await client.query(
-              'INSERT INTO order_files (order_id, file_name, file_storage_key, file_type, file_extension, page_count, print_type, color_page_ranges, copies, sides, bw_pages, color_pages, file_price, student_note) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
-              [newOrder.id, file.file_name, file.file_storage_key, file.file_type, file.file_extension, file.page_count, file.print_type, file.color_page_ranges, file.copies, file.sides, file.bw_pages, file.color_pages, file.file_price, file.student_note]
+              'INSERT INTO order_files (order_id, file_name, file_storage_key, file_type, file_extension, page_count, print_type, color_page_ranges, copies, sides, bw_pages, color_pages, file_price, student_note, file_size_kb) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)',
+              [newOrder.id, file.file_name, file.file_storage_key, file.file_type, file.file_extension, file.page_count, file.print_type, file.color_page_ranges, file.copies, file.sides, file.bw_pages, file.color_pages, file.file_price, file.student_note, file.file_size_kb]
             );
           }
         }

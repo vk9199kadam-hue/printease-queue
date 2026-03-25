@@ -33,6 +33,7 @@ export interface FileItem {
   color_pages: number;
   file_price: number;
   student_note: string;
+  file_size_kb: number;
   base64?: string;
 }
 
@@ -42,6 +43,7 @@ export interface ExtraServices {
 }
 
 export interface Order {
+  id?: string;
   order_id: string;
   student_id: string;
   student_print_id: string;

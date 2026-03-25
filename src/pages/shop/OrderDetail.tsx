@@ -166,7 +166,7 @@ export default function OrderDetail() {
               <div className="flex-1">
                 <p className="text-sm font-medium text-foreground">{f.file_name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {f.page_count}pg · {f.print_type} · ×{f.copies} · {f.sides}
+                  {f.page_count}pg · {f.print_type} · ×{f.copies} · {f.sides} · {f.file_size_kb >= 1024 ? (f.file_size_kb / 1024).toFixed(1) + 'MB' : f.file_size_kb + 'KB'}
                 </p>
                 {f.student_note && (
                   <div className="mt-2 p-2 rounded bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800 animate-pulse">
