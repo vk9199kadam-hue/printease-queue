@@ -2,9 +2,10 @@ import { Pool } from 'pg';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  connectionTimeoutMillis: 5000, 
-  idleTimeoutMillis: 10000,
-  max: 10
+  ssl: process.env.DATABASE_URL?.includes('cockroachlabs.cloud') ? { rejectUnauthorized: false } : false,
+  connectionTimeoutMillis: 10000, 
+  idleTimeoutMillis: 30000,
+  max: 20
 });
 
 pool.on('error', (err) => {
@@ -87,8 +88,8 @@ export default async function handler(req: any, res: any) {
         if (files && files.length > 0) {
           for (const file of files) {
             await client.query(
-              'INSERT INTO order_files (order_id, file_name, file_storage_key, file_type, file_extension, page_count, print_type, color_page_ranges, copies, sides, bw_pages, color_pages, file_price, student_note, file_size_kb) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)',
-              [newOrder.id, file.file_name, file.file_storage_key, file.file_type, file.file_extension, file.page_count, file.print_type, file.color_page_ranges, file.copies, file.sides, file.bw_pages, file.color_pages, file.file_price, file.student_note, file.file_size_kb]
+              'INSERT INTO order_files (order_id, file_name, file_storage_key, file_type, file_extension, page_count, print_type, color_page_ranges, copies, sides, bw_pages, color_pages, file_price, student_note) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
+              [newOrder.id, file.file_name, file.file_storage_key, file.file_type, file.file_extension, file.page_count, file.print_type, file.color_page_ranges, file.copies, file.sides, file.bw_pages, file.color_pages, file.file_price, file.student_note]
             );
           }
         }
@@ -158,8 +159,13 @@ export default async function handler(req: any, res: any) {
         return res.status(400).json({ error: 'Unknown action' });
     }
   } catch (error: any) {
-    console.error(`RPC Error [${action}]:`, error.message);
-    return res.status(500).json({ error: error.message });
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[RPC ERROR] Action: ${action} | Message: ${errorMsg}`);
+    return res.status(500).json({ 
+      error: 'Database operation failed', 
+      details: errorMsg,
+      action 
+    });
   } finally {
     if (client) client.release();
   }

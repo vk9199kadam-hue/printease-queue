@@ -1,5 +1,5 @@
 import { User, Shopkeeper, Order, Pricing, Session, Submission, Notice } from '../types';
-import { SupabaseDB } from './supabaseDb';
+import { CockroachDB } from './cockroachDb';
 
 const KEYS = {
   SESSION: 'printease_session',
@@ -8,16 +8,16 @@ const KEYS = {
 
 export const DB = {
   async getUsers(): Promise<User[]> {
-    return SupabaseDB.getUsers();
+    return CockroachDB.getUsers();
   },
   async getUserByEmail(email: string): Promise<User | null> {
-    return SupabaseDB.getUserByEmail(email);
+    return CockroachDB.getUserByEmail(email);
   },
   async getUserById(id: string): Promise<User | null> {
-    return SupabaseDB.getUserById(id);
+    return CockroachDB.getUserById(id);
   },
   async createUser(data: { name: string; email: string; password?: string; gender: string }): Promise<User | null> {
-    return SupabaseDB.createUser(data);
+    return CockroachDB.createUser(data);
   },
   async updateUser(id: string, updates: Partial<User>): Promise<User | null> {
     // We don't have an updateUser rpc yet but let's mock it or ignore for now
@@ -29,41 +29,41 @@ export const DB = {
     return null; 
   },
   async verifyShopkeeper(email: string, password: string): Promise<Shopkeeper | null> {
-    return SupabaseDB.verifyShopkeeper(email, password);
+    return CockroachDB.verifyShopkeeper(email, password);
   },
   async getOrders(): Promise<Order[]> {
     return []; // Not used directly in UI usually
   },
   async getOrderById(order_id: string): Promise<Order | null> {
-    // SupabaseDB doesn't have getOrderById natively, so we fetch all and filter or we can add it.
-    // Let's add it to SupabaseDB or implement here.
+    // CockroachDB doesn't have getOrderById natively, so we fetch all and filter or we can add it.
+    // Let's add it to CockroachDB or implement here.
     const res = await fetch('/api/rpc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getOrderById', payload: { id: order_id } }) });
     const data = await res.json();
     return data.data || null;
   },
   async getOrdersByStudentId(student_id: string): Promise<Order[]> {
-    return SupabaseDB.getOrdersByStudentId(student_id);
+    return CockroachDB.getOrdersByStudentId(student_id);
   },
   async getPaidOrders(): Promise<Order[]> {
-    return SupabaseDB.getPaidOrders();
+    return CockroachDB.getPaidOrders();
   },
   async createOrder(data: Omit<Order, 'order_id' | 'created_at' | 'updated_at'>): Promise<Order | null> {
-    return SupabaseDB.createOrder(data);
+    return CockroachDB.createOrder(data);
   },
   async updateOrderStatus(order_id: string, print_status: Order['print_status']): Promise<boolean> {
-    return SupabaseDB.updateOrderStatus(order_id, print_status);
+    return CockroachDB.updateOrderStatus(order_id, print_status);
   },
   async updateOrderQR(order_id: string, qr_code: string): Promise<void> {
     // Not critical for now
   },
   async saveFile(key: string, base64: string): Promise<void> {
-    await SupabaseDB.saveFile(key, base64);
+    await CockroachDB.saveFile(key, base64);
   },
   async getFile(key: string): Promise<string | null> {
-    return SupabaseDB.getFile(key);
+    return CockroachDB.getFile(key);
   },
   async deleteFile(key: string): Promise<void> {
-    await SupabaseDB.deleteFile(key);
+    await CockroachDB.deleteFile(key);
   },
   getPricing(): Pricing {
     const data = localStorage.getItem(KEYS.PRICING);
@@ -80,7 +80,7 @@ export const DB = {
     localStorage.removeItem(KEYS.SESSION);
   },
   async getTodayAnalytics() {
-    const orders = await SupabaseDB.getPaidOrders();
+    const orders = await CockroachDB.getPaidOrders();
     const today = new Date().toDateString();
     const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === today);
     return {
@@ -96,19 +96,20 @@ export const DB = {
     };
   },
   async getSubmissions(): Promise<Submission[]> {
-    return SupabaseDB.getSubmissions();
+    return CockroachDB.getSubmissions();
   },
   async getSubmissionsByStudent(student_id: string): Promise<Submission[]> {
-    const subs = await SupabaseDB.getSubmissions();
+    const subs = await CockroachDB.getSubmissions();
     return subs.filter(s => s.student_id === student_id);
   },
   async createSubmission(data: Omit<Submission, 'submission_id' | 'validation_status' | 'notices' | 'created_at' | 'updated_at'>): Promise<Submission | null> {
-    return SupabaseDB.createSubmission(data);
+    return CockroachDB.createSubmission(data);
   },
   async updateSubmissionStatus(submission_id: string, status: Submission['validation_status']): Promise<boolean> {
-    return SupabaseDB.updateSubmissionStatus(submission_id, status);
+    return CockroachDB.updateSubmissionStatus(submission_id, status);
   },
   async addNoticeToSubmission(submission_id: string, type: Notice['type'], message: string): Promise<boolean> {
-    return SupabaseDB.addNoticeToSubmission(submission_id, type, message);
+    return CockroachDB.addNoticeToSubmission(submission_id, type, message);
   }
 };
+

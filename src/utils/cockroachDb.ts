@@ -12,7 +12,7 @@ async function rpc(action: string, payload: Record<string, unknown> = {}) {
   return data.data;
 }
 
-export const SupabaseDB = {
+export const CockroachDB = {
   async getUsers(): Promise<User[]> {
     return await rpc('getUsers').catch(() => []);
   },
