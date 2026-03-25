@@ -2,6 +2,13 @@ import { Pool } from 'pg';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: 5000, 
+  idleTimeoutMillis: 10000,
+  max: 10
+});
+
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -9,16 +16,15 @@ export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
   const { action, payload } = req.body;
-  console.log(`RPC [${action}] Started - Timestamp: ${Date.now()}`);
-
-  const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Database Connection Timeout - Possible Sleepy Cluster')), 5000));
   
   let client;
   try {
-    client = await Promise.race([pool.connect(), timeoutPromise]) as any;
-    console.log(`RPC [${action}] Connected to DB`);
+    client = await pool.connect();
     
     switch (action) {
+      case 'health': {
+        return res.json({ status: 'ok', timestamp: Date.now() });
+      }
       case 'getUsers': {
         const { rows } = await client.query('SELECT * FROM users');
         return res.json({ data: rows });
@@ -98,12 +104,13 @@ export default async function handler(req: any, res: any) {
               const files = await client.query('SELECT file_storage_key FROM order_files WHERE order_id = $1', [rows[0].id]);
               for (const file of files.rows) {
                 if (file.file_storage_key) {
-                  await client.query('DELETE FROM file_storage WHERE key = $1', [file.file_storage_key]).catch(e => console.error('DB Delete Error:', e));
+                  await client.query('DELETE FROM file_storage WHERE key = $1', [file.file_storage_key])
+                    .catch((e: Error) => console.error('DB Delete Error:', e.message));
                 }
               }
             }
-          } catch (e) {
-            console.error('File cleanup error:', e);
+          } catch (e: any) {
+            console.error('File cleanup error:', e.message);
           }
         }
         
@@ -150,10 +157,9 @@ export default async function handler(req: any, res: any) {
       default:
         return res.status(400).json({ error: 'Unknown action' });
     }
-  } catch (error: unknown) {
-    console.error(`RPC Error [${action}]:`, error);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return res.status(500).json({ error: (error as any).message });
+  } catch (error: any) {
+    console.error(`RPC Error [${action}]:`, error.message);
+    return res.status(500).json({ error: error.message });
   } finally {
     if (client) client.release();
   }
