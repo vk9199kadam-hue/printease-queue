@@ -17,7 +17,8 @@ export default function Payment() {
 
   const [processing, setProcessing] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState('');
-  const [progress, setProgress] = useState(0);
+  const [step, setStep] = useState(1); // 1: Method, 2: Show QR
+  const [upiQR, setUpiQR] = useState('');
   const [error, setError] = useState('');
 
   if (!state || !currentUser) { navigate('/student/upload'); return null; }
@@ -29,14 +30,33 @@ export default function Payment() {
   });
   const priceResult = calcTotal(state.files, state.extras, pricing);
 
-  const handlePay = async () => {
+  const handleGenerateQR = async () => {
+    if (!selectedPayment) { setError('Select a payment app'); return; }
     setProcessing(true);
-    setProgress(0);
-    const interval = setInterval(() => setProgress(p => Math.min(p + 5, 95)), 100);
+    setError('');
+    
+    // In a real app, this UPI ID should come from the Shopkeeper's profile
+    const shopUPI = "vk9199kadam@oksbi"; // Example UPI placeholder
+    const amount = priceResult.total_amount;
+    const orderId = 'ORD-' + Date.now();
+    
+    // Standard UPI Payment URI
+    const upiLink = `upi://pay?pa=${shopUPI}&pn=PrintEase&am=${amount}&tr=${orderId}&cu=INR`;
+    
+    try {
+      const qrData = await generateQR(upiLink);
+      setUpiQR(qrData);
+      setStep(2);
+    } catch (e) {
+      setError('Failed to generate payment QR');
+    } finally {
+      setProcessing(false);
+    }
+  };
 
-    await new Promise(r => setTimeout(r, 2000));
-    clearInterval(interval);
-    setProgress(100);
+  const handleFinishPayment = async () => {
+    setProcessing(true);
+    setError('');
 
     const tempId = 'ORD-' + Date.now();
     const qr = await generateQR(tempId);
@@ -76,9 +96,6 @@ export default function Payment() {
             <h3 className="font-syne font-bold text-lg text-foreground mb-2">Processing Payment...</h3>
             <p className="text-sm text-muted-foreground mb-1">₹{priceResult.total_amount} via {selectedPayment || 'UPI'}</p>
             <p className="text-xs text-muted-foreground mb-4">Please do not close this page</p>
-            <div className="w-full bg-secondary rounded-full h-2">
-              <div className="bg-blue-primary h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
-            </div>
             {error && <p className="text-destructive text-sm mt-4 font-semibold">{error}</p>}
           </div>
         </div>
@@ -120,33 +137,54 @@ export default function Payment() {
 
         {/* Payment methods */}
         <div className="bg-card rounded-2xl border border-input p-4">
-          <h3 className="font-semibold text-foreground mb-3">Pay with UPI</h3>
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            {[['gpay', '🟢 GPay'], ['phonepe', '🟣 PhonePe'], ['paytm', '🔵 Paytm']].map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setSelectedPayment(key)}
-                className={`py-3 rounded-xl text-sm font-semibold transition border-2
-                  ${selectedPayment === key ? 'border-blue-primary bg-blue-light text-blue-primary' : 'border-input bg-background text-foreground hover:border-blue-primary/50'}`}
+          {step === 1 ? (
+            <>
+              <h3 className="font-semibold text-foreground mb-3">Pay with UPI</h3>
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                {[['gpay', '🟢 GPay'], ['phonepe', '🟣 PhonePe'], ['paytm', '🔵 Paytm']].map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => { setSelectedPayment(key); setError(''); }}
+                    className={`py-3 rounded-xl text-sm font-semibold transition border-2
+                      ${selectedPayment === key ? 'border-blue-primary bg-blue-light text-blue-primary' : 'border-input bg-background text-foreground hover:border-blue-primary/50'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Lock size={12} /> Secure direct transfer — No Fees
+              </div>
+            </>
+          ) : (
+            <div className="text-center space-y-4">
+              <h3 className="font-bold text-foreground">Scan to Pay ₹{priceResult.total_amount}</h3>
+              <div className="bg-white p-4 rounded-xl border border-input inline-block">
+                <img src={upiQR} alt="UPI QR" className="w-48 h-48" />
+              </div>
+              <p className="text-xs text-muted-foreground">Open your UPI app and scan the QR above</p>
+              <button 
+                onClick={() => setStep(1)}
+                className="text-xs text-blue-primary font-semibold hover:underline"
               >
-                {label}
+                ← Use different app
               </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-4">
-            <Lock size={12} /> Demo mode — no real payment processed
-          </div>
+            </div>
+          )}
         </div>
 
         {error && <p className="text-red-500 text-sm text-center font-bold px-4">{error}</p>}
 
         <button
-          onClick={handlePay}
+          onClick={step === 1 ? handleGenerateQR : handleFinishPayment}
           disabled={processing}
           className="w-full py-4 rounded-xl bg-blue-primary text-primary-foreground font-bold text-lg hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          Pay ₹{priceResult.total_amount} Now 🔒
+          {processing ? (
+            <Loader2 className="animate-spin" size={20} />
+          ) : (
+            step === 1 ? 'Generate QR Code 🔐' : 'I have Payed — Send My Print ✅'
+          )}
         </button>
       </div>
     </div>
