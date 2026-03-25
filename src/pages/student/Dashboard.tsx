@@ -22,7 +22,12 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     if (!currentUser) return;
-    const load = async () => setOrders(await DB.getOrdersByStudentId(currentUser.id));
+    const load = async () => {
+      if (document.visibilityState === 'visible') {
+        const data = await DB.getOrdersByStudentId(currentUser.id);
+        setOrders(data);
+      }
+    };
     load();
     const interval = setInterval(load, 5000);
     return () => clearInterval(interval);

@@ -25,15 +25,17 @@ export default function ShopDashboard() {
 
   useEffect(() => {
     const load = async () => {
-      const paid = await DB.getPaidOrders();
-      if (paid.length > prevCount.current && prevCount.current > 0) {
-        playNotificationSound();
+      if (document.visibilityState === 'visible') {
+        const paid = await DB.getPaidOrders();
+        if (paid.length > prevCount.current && prevCount.current > 0) {
+          playNotificationSound();
+        }
+        prevCount.current = paid.length;
+        setOrders(paid);
       }
-      prevCount.current = paid.length;
-      setOrders(paid);
     };
     load();
-    const interval = setInterval(load, 3000);
+    const interval = setInterval(load, 5000);
     return () => clearInterval(interval);
   }, []);
 
