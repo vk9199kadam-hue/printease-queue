@@ -13,7 +13,12 @@ export default function Payment() {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useAuth();
-  const state = location.state as { files: FileItem[]; extras: ExtraServices } | null;
+  const state = location.state as { 
+    files: FileItem[]; 
+    extras: ExtraServices; 
+    isCapstone?: boolean; 
+    capstoneData?: { name: string; contact: string; college: string; department: string; receiving_date: string } 
+  } | null;
 
   const [processing, setProcessing] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState('');
@@ -64,6 +69,11 @@ export default function Payment() {
       student_id: currentUser.id,
       student_print_id: currentUser.student_print_id,
       student_name: currentUser.name,
+      order_type: state.isCapstone ? 'capstone' : 'standard',
+      contact_number: state.capstoneData?.contact,
+      college: state.capstoneData?.college,
+      department: state.capstoneData?.department,
+      receiving_date: state.capstoneData?.receiving_date,
       // Remove the base64 string from the file list to avoid hitting Vercel's 4.5MB request limit
       files: filesWithPrices.map(({ base64, ...rest }) => rest),
       total_bw_pages: filesWithPrices.reduce((s, f) => s + f.bw_pages, 0),

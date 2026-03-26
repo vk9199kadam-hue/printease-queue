@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Upload, ClipboardList, Copy, Check } from 'lucide-react';
+import { LogOut, Upload, ClipboardList, Copy, Check, FolderEdit } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { DB } from '../../utils/db';
 import { Order } from '../../types';
@@ -78,12 +78,19 @@ export default function StudentDashboard() {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 animate-fade-in-up">
-          <button onClick={() => navigate('/student/upload')} className="flex-1 py-3 rounded-xl bg-blue-primary text-primary-foreground font-semibold hover:opacity-90 transition flex items-center justify-center gap-2">
-            <Upload size={18} /> Upload Files
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-in-up">
+          <button onClick={() => navigate('/student/upload')} className="py-4 rounded-xl bg-blue-primary text-primary-foreground font-bold hover:opacity-90 transition flex flex-col items-center justify-center gap-2 shadow-lg shadow-blue-primary/20">
+            <Upload size={24} />
+            <span className="text-sm">Standard Print</span>
+            <span className="text-[10px] font-normal opacity-80 italic">Regular PDF/PPT/Word</span>
           </button>
-          <button onClick={() => navigate('/student/history')} className="flex-1 py-3 rounded-xl border-2 border-input bg-card text-foreground font-semibold hover:bg-secondary transition flex items-center justify-center gap-2">
-            <ClipboardList size={18} /> History
+          <button onClick={() => navigate('/student/capstone')} className="py-4 rounded-xl bg-emerald-600 text-primary-foreground font-bold hover:opacity-90 transition flex flex-col items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
+            <FolderEdit size={24} />
+            <span className="text-sm">Capstone Project</span>
+            <span className="text-[10px] font-normal opacity-80 italic">Full Project Report</span>
+          </button>
+          <button onClick={() => navigate('/student/history')} className="sm:col-span-2 py-3 rounded-xl border-2 border-input bg-card text-foreground font-semibold hover:bg-secondary transition flex items-center justify-center gap-2">
+            <ClipboardList size={18} /> Order History & Tracking
           </button>
         </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Navigate } from 'react-router-dom';
-import { ArrowLeft, Printer, CheckCircle, Package, Loader2, Download } from 'lucide-react';
+import { ArrowLeft, Printer, CheckCircle, Package, Loader2, Download, Phone, Calendar } from 'lucide-react';
 import { DB } from '../../utils/db';
 import { Order, FileItem } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
@@ -151,11 +151,49 @@ export default function OrderDetail() {
         {/* Student info */}
         <div className="bg-card rounded-xl border border-input p-4">
           <p className="text-sm text-muted-foreground mb-1">Student</p>
-          <p className="font-semibold text-foreground">{order.student_name}</p>
-          <span className="bg-blue-light text-blue-primary text-xs font-mono font-semibold px-2 py-0.5 rounded-md mt-1 inline-block">
-            {order.student_print_id}
-          </span>
+          <div className="flex items-center justify-between">
+             <div>
+                <p className="font-semibold text-foreground text-lg">{order.student_name}</p>
+                <span className="bg-blue-light text-blue-primary text-xs font-mono font-semibold px-2 py-0.5 rounded-md mt-1 inline-block">
+                  {order.student_print_id}
+                </span>
+             </div>
+             {order.contact_number && (
+                <a href={`tel:${order.contact_number}`} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20 active:scale-95 transition">
+                   <Phone size={14} /> CALL STUDENT
+                </a>
+             )}
+          </div>
         </div>
+
+        {/* Project Specific Info */}
+        {order.order_type === 'capstone' && (
+          <div className="bg-emerald-50 rounded-xl border-2 border-emerald-600 p-4 relative overflow-hidden animate-fade-in-up">
+            <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] px-3 py-1 font-bold rounded-bl-lg uppercase tracking-widest">Capstone Project</div>
+            <h3 className="font-bold text-emerald-800 text-sm mb-3">Project Submission Metadata</h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                 <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60">College</p>
+                 <p className="text-sm font-bold text-emerald-900">{order.college}</p>
+              </div>
+              <div className="space-y-1">
+                 <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60">Department</p>
+                 <p className="text-sm font-bold text-emerald-900">{order.department}</p>
+              </div>
+              <div className="space-y-1">
+                 <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60">Contact</p>
+                 <p className="text-sm font-bold text-emerald-900">{order.contact_number}</p>
+              </div>
+              <div className="space-y-1">
+                 <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60">Recv. Date</p>
+                 <p className="text-sm font-bold text-emerald-900 flex items-center gap-2">
+                   <Calendar size={14} /> {order.receiving_date}
+                 </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Files */}
         <div className="bg-card rounded-xl border border-input p-4">

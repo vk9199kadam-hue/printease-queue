@@ -59,6 +59,11 @@ export interface Order {
   total_amount: number;
   payment_status: 'unpaid' | 'paid' | 'failed';
   print_status: 'queued' | 'printing' | 'ready' | 'completed';
+  order_type: 'standard' | 'capstone';
+  contact_number?: string;
+  college?: string;
+  department?: string;
+  receiving_date?: string;
   qr_code: string;
   created_at: string;
   updated_at: string;

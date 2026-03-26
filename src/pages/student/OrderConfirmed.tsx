@@ -87,6 +87,13 @@ export default function OrderConfirmed() {
         <div className="bg-green-light rounded-xl p-4 text-center border border-green-primary/20">
           <p className="text-green-primary font-semibold">✓ Your order is in the print queue</p>
           <p className="text-sm text-green-primary/70">The shopkeeper has been notified</p>
+          {order.order_type === 'capstone' && (
+            <div className="mt-4 pt-4 border-t border-green-primary/20">
+              <p className="text-xs text-green-800 font-bold uppercase tracking-wider mb-1">Capstone Support</p>
+              <p className="text-lg font-mono font-bold text-green-primary">📞 +91 9762626246</p>
+              <p className="text-[10px] text-green-800/70 mt-1 italic">Contact shopkeeper for project updates.</p>
+            </div>
+          )}
         </div>
 
         {/* Actions */}
