@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Navigate } from 'react-router-dom';
-import { ArrowLeft, Printer, CheckCircle, Package, Loader2, Download, Phone, Calendar } from 'lucide-react';
+import { ArrowLeft, Printer, CheckCircle, Package, Loader2, Download, Phone, Calendar, MessageSquare } from 'lucide-react';
 import { DB } from '../../utils/db';
 import { Order, FileItem } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
@@ -175,23 +175,38 @@ export default function OrderDetail() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                  <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60">College</p>
-                 <p className="text-sm font-bold text-emerald-900">{order.college}</p>
+                 <p className="text-base font-bold text-emerald-900">{order.college}</p>
               </div>
               <div className="space-y-1">
                  <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60">Department</p>
-                 <p className="text-sm font-bold text-emerald-900">{order.department}</p>
+                 <p className="text-base font-bold text-emerald-900">{order.department}</p>
               </div>
               <div className="space-y-1">
                  <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60">Contact</p>
-                 <p className="text-sm font-bold text-emerald-900">{order.contact_number}</p>
+                 <p className="text-base font-bold text-emerald-900">{order.contact_number}</p>
               </div>
               <div className="space-y-1">
                  <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60">Recv. Date</p>
-                 <p className="text-sm font-bold text-emerald-900 flex items-center gap-2">
+                 <p className="text-base font-bold text-emerald-900 flex items-center gap-2">
                    <Calendar size={14} /> {order.receiving_date}
                  </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Global Student Instruction (Sticky Note) */}
+        {order.files.some(f => f.student_note) && (
+          <div className="bg-amber-50 rounded-xl border-2 border-amber-400 p-6 shadow-lg shadow-amber-200/50 animate-pulse-subtle">
+            <div className="flex items-center gap-2 text-amber-700 font-syne font-bold uppercase tracking-wider text-xs mb-3">
+               <MessageSquare size={16} /> Student Instructions (Note Down)
+            </div>
+            {order.files.filter(f => f.student_note).map((f, i) => (
+              <div key={i} className="mb-3 last:mb-0">
+                <p className="text-[10px] font-bold text-amber-600/60 uppercase">{f.file_name} Note:</p>
+                <p className="text-xl font-bold text-amber-900 leading-tight">"{f.student_note}"</p>
+              </div>
+            ))}
           </div>
         )}
 
