@@ -20,7 +20,11 @@ function parseColorPageRanges(rangeStr: string, totalPages: number): number {
 }
 
 export function calcFilePrice(file: FileItem, pricing: Pricing): { bw_pages: number; color_pages: number; file_price: number } {
-  const pages = file.page_count || 1;
+  let pages = file.page_count || 1;
+  // Apply slides per page reduction for PowerPoint files
+  if (file.file_type === 'powerpoint' && file.slidesPerPage && file.slidesPerPage > 1) {
+    pages = Math.ceil(pages / file.slidesPerPage);
+  }
   const copies = file.copies || 1;
   let bw_pages = 0;
   let color_pages = 0;

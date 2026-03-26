@@ -165,9 +165,32 @@ export default function OrderDetail() {
               <FileTypeIcon type={f.file_type} size={18} />
               <div className="flex-1">
                 <p className="text-sm font-medium text-foreground">{f.file_name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {f.page_count}pg · {f.print_type} · ×{f.copies} · {f.sides} · {f.file_size_kb >= 1024 ? (f.file_size_kb / 1024).toFixed(1) + 'MB' : f.file_size_kb + 'KB'}
-                </p>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                    {f.page_count} PAGES
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                    f.print_type === 'bw' ? 'bg-gray-100 text-gray-700 border-gray-200' : 
+                    f.print_type === 'color' ? 'bg-pink-100 text-pink-700 border-pink-200' : 
+                    'bg-purple-100 text-purple-700 border-purple-200'
+                  }`}>
+                    {f.print_type.toUpperCase()}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold border border-blue-200">
+                    ×{f.copies} COPIES
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold border border-indigo-200 uppercase">
+                    {f.sides}
+                  </span>
+                  {f.slidesPerPage && f.slidesPerPage > 1 && (
+                    <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-[10px] font-bold border border-orange-200">
+                      {f.slidesPerPage} SLIDES/PG
+                    </span>
+                  )}
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200 uppercase">
+                    {f.file_size_kb >= 1024 ? (f.file_size_kb / 1024).toFixed(1) + 'MB' : f.file_size_kb + 'KB'}
+                  </span>
+                </div>
                 {f.student_note && (
                   <div className="mt-2 p-2 rounded bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800 animate-pulse">
                     ⚠️ SPECIAL NOTE: {f.student_note}

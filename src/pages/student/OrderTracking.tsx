@@ -138,8 +138,18 @@ export default function OrderTracking() {
             <span className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleString()}</span>
           </div>
           <div className="space-y-1 text-sm text-muted-foreground">
-            <p>{order.files.length} file{order.files.length !== 1 ? 's' : ''} · {order.total_pages} pages</p>
-            <p className="font-semibold text-foreground">₹{order.total_amount}</p>
+          <div className="flex flex-wrap gap-2 text-sm">
+            <span className="font-semibold text-blue-primary bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">
+              {order.files.length} FILE{order.files.length !== 1 ? 'S' : ''}
+            </span>
+            <span className="font-semibold text-emerald-primary bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">
+              {order.total_pages} PAGES
+            </span>
+            {order.files.some(f => (f.slidesPerPage || 0) > 1) && (
+              <span className="font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-lg border border-orange-100 uppercase text-[10px] flex items-center">MULTI-SLIDE</span>
+            )}
+            <span className="ml-auto font-bold text-xl text-foreground">₹{order.total_amount}</span>
+          </div>
           </div>
         </div>
 

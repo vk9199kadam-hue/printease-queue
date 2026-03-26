@@ -117,8 +117,16 @@ export default function Payment() {
               <FileTypeIcon type={f.file_type} size={18} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{f.file_name}</p>
-                <p className="text-xs text-muted-foreground">{f.page_count}pg · {f.print_type} · ×{f.copies} · {f.sides}</p>
-                {f.student_note && <p className="text-xs text-muted-foreground italic mt-0.5">"{f.student_note}"</p>}
+                <div className="flex flex-wrap gap-x-2 gap-y-1 mt-1">
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 rounded uppercase">{f.page_count}pg</span>
+                  <span className="text-[10px] font-bold text-pink-600 bg-pink-50 px-1.5 rounded uppercase">{f.print_type}</span>
+                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 rounded uppercase">×{f.copies} copies</span>
+                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 rounded uppercase">{f.sides}</span>
+                  {f.slidesPerPage && f.slidesPerPage > 1 && (
+                    <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 rounded uppercase">{f.slidesPerPage} slides/pg</span>
+                  )}
+                </div>
+                {f.student_note && <p className="text-[10px] text-muted-foreground italic mt-1 font-medium">Note: "{f.student_note}"</p>}
               </div>
               <span className="text-sm font-semibold text-foreground">₹{f.file_price}</span>
             </div>

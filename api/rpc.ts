@@ -110,8 +110,8 @@ export default async function handler(req: any, res: any) {
                 }
               }
             }
-          } catch (e: any) {
-            console.error('File cleanup error:', e.message);
+          } catch (e) {
+            console.error('File cleanup error:', e instanceof Error ? e.message : String(e));
           }
         }
         
@@ -158,7 +158,7 @@ export default async function handler(req: any, res: any) {
       default:
         return res.status(400).json({ error: 'Unknown action' });
     }
-  } catch (error: any) {
+  } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error(`[RPC ERROR] Action: ${action} | Message: ${errorMsg}`);
     return res.status(500).json({ 

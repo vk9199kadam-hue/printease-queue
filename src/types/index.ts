@@ -29,6 +29,7 @@ export interface FileItem {
   color_page_ranges: string;
   copies: number;
   sides: 'single' | 'double';
+  slidesPerPage?: number;
   bw_pages: number;
   color_pages: number;
   file_price: number;

@@ -77,8 +77,15 @@ export default function OrderHistory() {
                   <StatusBadge status={order.print_status} />
                 </div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString()} · {order.files.length} files · {order.total_pages} pages</span>
-                  <span className="text-sm font-semibold text-foreground">₹{order.total_amount}</span>
+                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <span className="font-medium bg-secondary px-1.5 py-0.5 rounded">{new Date(order.created_at).toLocaleDateString()}</span>
+                    <span className="font-medium bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">{order.files.length} FILE{order.files.length !== 1 ? 'S' : ''}</span>
+                    <span className="font-medium bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">{order.total_pages} PAGES</span>
+                    {order.files.some(f => (f.slidesPerPage || 0) > 1) && (
+                      <span className="font-medium bg-orange-50 text-orange-700 px-1.5 py-0.5 rounded">MULTI-SLIDE</span>
+                    )}
+                  </div>
+                  <span className="text-sm font-bold text-foreground">₹{order.total_amount}</span>
                 </div>
                 {order.print_status === 'ready' && (
                   <div className="bg-green-light rounded-lg p-2 text-center text-sm text-green-primary font-semibold mb-2">

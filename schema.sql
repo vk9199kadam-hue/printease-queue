@@ -1,4 +1,4 @@
-CREATE TABLE shopkeepers (
+CREATE TABLE IF NOT EXISTS shopkeepers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE shopkeepers (
     created_at TIMESTAMP DEFAULT current_timestamp()
 );
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT current_timestamp()
 );
 
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id VARCHAR(50) UNIQUE NOT NULL,
     student_id VARCHAR(255) NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE orders (
     created_at TIMESTAMP DEFAULT current_timestamp()
 );
 
-CREATE TABLE order_files (
+CREATE TABLE IF NOT EXISTS order_files (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
     file_name VARCHAR(500) NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE order_files (
     student_note TEXT
 );
 
-CREATE TABLE submissions (
+CREATE TABLE IF NOT EXISTS submissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     submission_id VARCHAR(50) UNIQUE NOT NULL,
     student_id VARCHAR(255),
@@ -74,7 +74,7 @@ CREATE TABLE submissions (
     created_at TIMESTAMP DEFAULT current_timestamp()
 );
 
-CREATE TABLE notices (
+CREATE TABLE IF NOT EXISTS notices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     submission_id UUID REFERENCES submissions(id) ON DELETE CASCADE,
     type VARCHAR(50),
