@@ -26,14 +26,6 @@ export default async function handler(req: any, res: any) {
       case 'health': {
         return res.json({ status: 'ok', timestamp: Date.now() });
       }
-      case 'migrate': {
-        await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(50) DEFAULT \'standard\'');
-        await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS contact_number VARCHAR(255)');
-        await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS college VARCHAR(255)');
-        await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS department VARCHAR(255)');
-        await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS receiving_date VARCHAR(50)');
-        return res.json({ status: 'migration_complete' });
-      }
       case 'getUsers': {
         const { rows } = await client.query('SELECT * FROM users');
         return res.json({ data: rows });
