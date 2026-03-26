@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Navigate } from 'react-router-dom';
-import { ArrowLeft, Printer, CheckCircle, Package, Loader2, Download, Phone, Calendar, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Printer, CheckCircle, Package, Loader2, Download, Phone, Calendar, MessageSquare, User, School, BookOpen } from 'lucide-react';
 import { DB } from '../../utils/db';
 import { Order, FileItem } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
@@ -168,29 +168,44 @@ export default function OrderDetail() {
 
         {/* Project Specific Info */}
         {order.order_type === 'capstone' && (
-          <div className="bg-emerald-50 rounded-xl border-2 border-emerald-600 p-4 relative overflow-hidden animate-fade-in-up">
-            <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] px-3 py-1 font-bold rounded-bl-lg uppercase tracking-widest">Capstone Project</div>
-            <h3 className="font-bold text-emerald-800 text-sm mb-3">Project Submission Metadata</h3>
+          <div className="bg-emerald-50 rounded-2xl border-2 border-emerald-600 p-6 relative overflow-hidden shadow-xl shadow-emerald-500/10 animate-fade-in-up">
+            <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] px-4 py-1.5 font-bold rounded-bl-xl uppercase tracking-widest shadow-sm">Capstone Project Ticket</div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shrink-0 border-4 border-emerald-100 shadow-inner">
+                <User size={32} />
+              </div>
+              <div>
+                <p className="text-[10px] font-extrabold text-emerald-600 uppercase tracking-tighter opacity-70">Student Name</p>
+                <h3 className="text-2xl font-black text-emerald-950 leading-none">{order.student_name}</h3>
+                <p className="text-xs font-bold text-emerald-700 mt-1 flex items-center gap-1"><Phone size={12} /> {order.contact_number}</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-emerald-200/50">
               <div className="space-y-1">
-                 <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60">College</p>
-                 <p className="text-base font-bold text-emerald-900">{order.college}</p>
+                 <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60 flex items-center gap-1 group"><School size={12} /> College & Institution</p>
+                 <p className="text-lg font-extrabold text-emerald-900 leading-tight">{order.college}</p>
               </div>
               <div className="space-y-1">
-                 <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60">Department</p>
-                 <p className="text-base font-bold text-emerald-900">{order.department}</p>
+                 <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60 flex items-center gap-1"><BookOpen size={12} /> Department</p>
+                 <p className="text-lg font-extrabold text-emerald-900 leading-tight">{order.department}</p>
               </div>
               <div className="space-y-1">
-                 <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60">Contact</p>
-                 <p className="text-base font-bold text-emerald-900">{order.contact_number}</p>
-              </div>
-              <div className="space-y-1">
-                 <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60">Recv. Date</p>
-                 <p className="text-base font-bold text-emerald-900 flex items-center gap-2">
-                   <Calendar size={14} /> {order.receiving_date}
+                 <p className="text-[10px] font-bold text-emerald-600 uppercase opacity-60 flex items-center gap-1"><Calendar size={12} /> Submission Date</p>
+                 <p className="text-lg font-extrabold text-emerald-900 flex items-center gap-2">
+                   {order.receiving_date}
                  </p>
               </div>
+            </div>
+
+            <div className="mt-6">
+               <button 
+                 onClick={() => window.location.href = `tel:${order.contact_number}`}
+                 className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-700/20 hover:bg-emerald-700 transition flex items-center justify-center gap-2"
+               >
+                 <Phone size={18} /> CALL STUDENT NOW
+               </button>
             </div>
           </div>
         )}
