@@ -24,7 +24,17 @@ export default async function handler(req: any, res: any) {
     
     switch (action) {
       case 'health': {
-        return res.json({ status: 'ok', timestamp: Date.now() });
+        try {
+          await pool.query('SELECT 1');
+          return res.json({ status: 'ok', db_connected: true, timestamp: Date.now() });
+        } catch (dbErr: any) {
+          return res.status(500).json({ 
+            status: 'db_error', 
+            db_connected: false, 
+            message: dbErr.message,
+            timestamp: Date.now() 
+          });
+        }
       }
       case 'getUsers': {
         const { rows } = await client.query('SELECT * FROM users');
