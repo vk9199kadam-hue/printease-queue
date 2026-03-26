@@ -90,7 +90,9 @@ export default function OrderConfirmed() {
           {order.order_type === 'capstone' && (
             <div className="mt-4 pt-4 border-t border-green-primary/20">
               <p className="text-xs text-green-800 font-bold uppercase tracking-wider mb-1">Capstone Support</p>
-              <p className="text-lg font-mono font-bold text-green-primary">📞 +91 9762626246</p>
+              <p className="text-lg font-mono font-bold text-green-primary truncate">
+                📞 {import.meta.env.VITE_CAPSTONE_SHOP_MOBILE || '9762626246'}
+              </p>
               <p className="text-[10px] text-green-800/70 mt-1 italic">Contact shopkeeper for project updates.</p>
             </div>
           )}

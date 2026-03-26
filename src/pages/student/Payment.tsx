@@ -33,7 +33,12 @@ export default function Payment() {
     const calc = calcFilePrice(f, pricing);
     return { ...f, bw_pages: calc.bw_pages, color_pages: calc.color_pages, file_price: calc.file_price };
   });
-  const priceResult = calcTotal(state.files, state.extras, pricing);
+  const capstoneFee = state.isCapstone ? Number(import.meta.env.VITE_CAPSTONE_PROJECT_SERVICE_FEE || '0') : 0;
+  const rawPrice = calcTotal(state.files, state.extras, pricing);
+  const priceResult = {
+    ...rawPrice,
+    total_amount: rawPrice.total_amount + capstoneFee
+  };
 
   const handleGenerateQR = async () => {
     if (!selectedPayment) { setError('Select a payment app'); return; }
@@ -141,10 +146,11 @@ export default function Payment() {
               <span className="text-sm font-semibold text-foreground">₹{f.file_price}</span>
             </div>
           ))}
-          {(state.extras.spiral_binding || state.extras.stapling) && (
+          {(state.extras.spiral_binding || state.extras.stapling || capstoneFee > 0) && (
             <div className="pt-2 border-t border-input mt-2 space-y-1">
               {state.extras.spiral_binding && <div className="flex justify-between text-xs text-muted-foreground"><span>Spiral Binding</span><span>₹{pricing.spiral_binding_fee}</span></div>}
               {state.extras.stapling && <div className="flex justify-between text-xs text-muted-foreground"><span>Stapling</span><span>₹{pricing.stapling_fee}</span></div>}
+              {capstoneFee > 0 && <div className="flex justify-between text-xs text-muted-foreground font-bold text-emerald-600"><span>Project Handling Fee</span><span>₹{capstoneFee}</span></div>}
             </div>
           )}
           <div className="flex justify-between items-center mt-3 pt-3 border-t border-input">
