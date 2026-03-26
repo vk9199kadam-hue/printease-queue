@@ -26,6 +26,14 @@ export default async function handler(req: any, res: any) {
       case 'health': {
         return res.json({ status: 'ok', timestamp: Date.now() });
       }
+      case 'migrate': {
+        await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(50) DEFAULT \'standard\'');
+        await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS contact_number VARCHAR(255)');
+        await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS college VARCHAR(255)');
+        await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS department VARCHAR(255)');
+        await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS receiving_date VARCHAR(50)');
+        return res.json({ status: 'migration_complete' });
+      }
       case 'getUsers': {
         const { rows } = await client.query('SELECT * FROM users');
         return res.json({ data: rows });
@@ -78,10 +86,10 @@ export default async function handler(req: any, res: any) {
         return res.json({ data: rows });
       }
       case 'createOrder': {
-        const { order_id, student_id, student_print_id, student_name, total_bw_pages, total_color_pages, total_pages, extra_services, service_fee, subtotal, total_amount, payment_status, print_status, qr_code, files } = payload;
+        const { order_id, student_id, student_print_id, student_name, total_bw_pages, total_color_pages, total_pages, extra_services, service_fee, subtotal, total_amount, payment_status, print_status, qr_code, files, order_type, contact_number, college, department, receiving_date } = payload;
         const result = await client.query(
-          'INSERT INTO orders (order_id, student_id, student_print_id, student_name, total_bw_pages, total_color_pages, total_pages, spiral_binding, stapling, service_fee, subtotal, total_amount, payment_status, print_status, qr_code) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *',
-          [order_id, student_id, student_print_id, student_name, total_bw_pages, total_color_pages, total_pages, extra_services?.spiral_binding, extra_services?.stapling, service_fee, subtotal, total_amount, payment_status, print_status, qr_code]
+          'INSERT INTO orders (order_id, student_id, student_print_id, student_name, total_bw_pages, total_color_pages, total_pages, spiral_binding, stapling, service_fee, subtotal, total_amount, payment_status, print_status, qr_code, order_type, contact_number, college, department, receiving_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING *',
+          [order_id, student_id, student_print_id, student_name, total_bw_pages, total_color_pages, total_pages, extra_services?.spiral_binding, extra_services?.stapling, service_fee, subtotal, total_amount, payment_status, print_status, qr_code, order_type || 'standard', contact_number, college, department, receiving_date]
         );
         const newOrder = result.rows[0];
         

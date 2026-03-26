@@ -35,7 +35,13 @@ CREATE TABLE IF NOT EXISTS orders (
     total_amount NUMERIC(10, 2),
     payment_status VARCHAR(50),
     print_status VARCHAR(50),
-    created_at TIMESTAMP DEFAULT current_timestamp()
+    created_at TIMESTAMP DEFAULT current_timestamp(),
+    qr_code TEXT,
+    order_type VARCHAR(50) DEFAULT 'standard',
+    contact_number VARCHAR(255),
+    college VARCHAR(255),
+    department VARCHAR(255),
+    receiving_date VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS order_files (
@@ -81,5 +87,5 @@ CREATE TABLE IF NOT EXISTS notices (
     message TEXT,
     created_at TIMESTAMP DEFAULT current_timestamp()
 );
+
 CREATE TABLE IF NOT EXISTS file_storage (key VARCHAR(255) PRIMARY KEY, file_data TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP); 
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS qr_code TEXT; 
