@@ -5,6 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import { DB } from '../../utils/db';
 import { Order } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
+import { playNotificationSound } from '../../utils/sound';
+import { useRef } from 'react';
 
 function timeAgo(date: string) {
   const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
@@ -20,14 +22,22 @@ export default function CapstoneOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const prevCount = useRef(0);
 
   useEffect(() => {
     const load = async () => {
-      const all = await DB.getPaidOrders();
-      setOrders(all.filter(o => o.order_type === 'capstone'));
+      if (document.visibilityState === 'visible') {
+        const all = await DB.getPaidOrders();
+        const capstoneOrders = all.filter(o => o.order_type === 'capstone');
+        if (capstoneOrders.length > prevCount.current && prevCount.current > 0) {
+          playNotificationSound();
+        }
+        prevCount.current = capstoneOrders.length;
+        setOrders(capstoneOrders);
+      }
     };
     load();
-    const interval = setInterval(load, 10000);
+    const interval = setInterval(load, 5000);
     return () => clearInterval(interval);
   }, []);
 

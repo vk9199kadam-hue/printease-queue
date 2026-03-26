@@ -26,12 +26,13 @@ export default function ShopDashboard() {
   useEffect(() => {
     const load = async () => {
       if (document.visibilityState === 'visible') {
-        const paid = await DB.getPaidOrders();
-        if (paid.length > prevCount.current && prevCount.current > 0) {
-          playNotificationSound();
-        }
-        prevCount.current = paid.length;
-        setOrders(paid);
+          const paid = await DB.getPaidOrders();
+          const standardOrders = paid.filter(o => o.order_type !== 'capstone');
+          if (standardOrders.length > prevCount.current && prevCount.current > 0) {
+            playNotificationSound();
+          }
+          prevCount.current = standardOrders.length;
+          setOrders(standardOrders);
       }
     };
     load();
