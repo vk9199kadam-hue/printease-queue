@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -25,9 +25,20 @@ export default function Payment() {
   const [step, setStep] = useState(1); // 1: Method, 2: Show QR
   const [upiQR, setUpiQR] = useState('');
   const [error, setError] = useState('');
+  const [shopInfo, setShopInfo] = useState<{ shop_name: string; upi_id: string; contact_number: string } | null>(null);
+
+  useEffect(() => {
+    const fetchShop = async () => {
+      try {
+        const res = await fetch('/api/rpc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getPublicShopInfo' }) });
+        const data = await res.json();
+        if (data.data) setShopInfo(data.data);
+      } catch (e) { console.error(e); }
+    };
+    fetchShop();
+  }, []);
 
   if (!state || !currentUser) { navigate('/student/upload'); return null; }
-
   const pricing = DB.getPricing();
   const filesWithPrices = state.files.map(f => {
     const calc = calcFilePrice(f, pricing);
@@ -45,8 +56,8 @@ export default function Payment() {
     setProcessing(true);
     setError('');
     
-    // In a real app, this UPI ID should come from the Shopkeeper's profile
-    const shopUPI = "vk9199kadam@oksbi"; // Example UPI placeholder
+    // Fetch shop UPI from DB, fallback to placeholder if not set
+    const shopUPI = shopInfo?.upi_id || "vk9199kadam@oksbi"; 
     const amount = priceResult.total_amount;
     const orderId = 'ORD-' + Date.now();
     

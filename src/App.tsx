@@ -20,6 +20,7 @@ import ShopSubmissions from './pages/shop/SubmissionsInbox';
 import OrderDetail from './pages/shop/OrderDetail';
 import CapstoneOrders from './pages/shop/CapstoneOrders';
 import Analytics from './pages/shop/Analytics';
+import ShopSettings from './pages/shop/Settings';
 
 function ProtectedStudentRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -54,6 +55,7 @@ function AppRoutes() {
       <Route path="/shop/capstone" element={<ProtectedShopRoute><CapstoneOrders /></ProtectedShopRoute>} />
       <Route path="/shop/order/:order_id" element={<ProtectedShopRoute><OrderDetail /></ProtectedShopRoute>} />
       <Route path="/shop/analytics" element={<ProtectedShopRoute><Analytics /></ProtectedShopRoute>} />
+      <Route path="/shop/settings" element={<ProtectedShopRoute><ShopSettings /></ProtectedShopRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

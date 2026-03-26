@@ -42,7 +42,9 @@ export default async function handler(req: any, res: any) {
           'ALTER TABLE orders ADD COLUMN IF NOT EXISTS contact_number VARCHAR(255)',
           'ALTER TABLE orders ADD COLUMN IF NOT EXISTS college VARCHAR(255)',
           'ALTER TABLE orders ADD COLUMN IF NOT EXISTS department VARCHAR(255)',
-          'ALTER TABLE orders ADD COLUMN IF NOT EXISTS receiving_date VARCHAR(50)'
+          'ALTER TABLE orders ADD COLUMN IF NOT EXISTS receiving_date VARCHAR(50)',
+          'ALTER TABLE shopkeepers ADD COLUMN IF NOT EXISTS upi_id VARCHAR(255)',
+          'ALTER TABLE shopkeepers ADD COLUMN IF NOT EXISTS contact_number VARCHAR(255)'
         ];
         for (const sql of columns) {
           try {
@@ -52,6 +54,22 @@ export default async function handler(req: any, res: any) {
           }
         }
         return res.json({ status: 'db_fix_completed' });
+      }
+      case 'getShopkeeperProfile': {
+        const { rows } = await client.query('SELECT * FROM shopkeepers WHERE email = $1', [payload.email]);
+        return res.json({ data: rows[0] || null });
+      }
+      case 'getPublicShopInfo': {
+        const { rows } = await client.query('SELECT shop_name, upi_id, contact_number FROM shopkeepers LIMIT 1');
+        return res.json({ data: rows[0] || null });
+      }
+      case 'updateShopkeeperProfile': {
+        const { email, name, shop_name, upi_id, contact_number } = payload;
+        const result = await client.query(
+          'UPDATE shopkeepers SET name = $2, shop_name = $3, upi_id = $4, contact_number = $5 WHERE email = $1 RETURNING *',
+          [email, name, shop_name, upi_id, contact_number]
+        );
+        return res.json({ data: result.rows[0] });
       }
       case 'getUsers': {
         const { rows } = await client.query('SELECT * FROM users');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Printer, BarChart3, LogOut, Search, Clock, Inbox, BookOpen, Calendar, Phone, School } from 'lucide-react';
+import { Printer, BarChart3, LogOut, Search, Clock, Inbox, BookOpen, Calendar, Phone, School, Settings as SettingsIcon } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { DB } from '../../utils/db';
 import { Order } from '../../types';
@@ -18,6 +18,7 @@ function timeAgo(date: string) {
 
 export default function CapstoneOrders() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentShop, logout } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState('all');
@@ -73,6 +74,9 @@ export default function CapstoneOrders() {
           <button onClick={() => navigate('/shop/analytics')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-green-300/60 hover:text-green-300 hover:bg-green-primary/10 transition">
             <BarChart3 size={18} /> Analytics
           </button>
+          <button onClick={() => navigate('/shop/settings')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${location.pathname === '/shop/settings' ? 'bg-green-primary/20 text-green-300' : 'text-green-300/60 hover:text-green-300 hover:bg-green-primary/10'}`}>
+            <SettingsIcon size={18} /> Settings
+          </button>
         </nav>
         <button onClick={handleLogout} className="flex items-center gap-2 text-red-400 text-sm hover:text-red-300 mt-auto">
           <LogOut size={16} /> Logout
@@ -83,7 +87,10 @@ export default function CapstoneOrders() {
       <main className="flex-1 md:ml-60">
         <header className="md:hidden bg-card border-b border-input px-4 py-3 flex items-center justify-between sticky top-0 z-20">
           <h1 className="font-syne font-bold text-lg text-foreground">Print<span className="text-green-primary">Ease</span></h1>
-          <button onClick={handleLogout} className="p-2 text-destructive"><LogOut size={18} /></button>
+          <div className="flex gap-2">
+            <button onClick={() => navigate('/shop/settings')} className="p-2 text-muted-foreground"><SettingsIcon size={18} /></button>
+            <button onClick={handleLogout} className="p-2 text-destructive"><LogOut size={18} /></button>
+          </div>
         </header>
 
         <div className="max-w-4xl mx-auto p-4 space-y-4">
