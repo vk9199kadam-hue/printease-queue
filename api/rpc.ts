@@ -197,37 +197,53 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
         return res.json({ data: newOrder });
       }
       case 'updateOrderStatus': {
-        await client.query('UPDATE orders SET print_status = $1 WHERE order_id = $2', [payload.print_status, payload.order_id]);
+        const { order_id, print_status } = payload;
+        await client.query('UPDATE orders SET print_status = $1 WHERE order_id = $2', [print_status, order_id]);
         
-        if (payload.print_status === 'completed') {
+        let cleanupReport = { cloud: 0, database: 0, errors: [] };
+
+        if (print_status === 'completed') {
           try {
-            const { rows } = await client.query('SELECT id FROM orders WHERE order_id = $1', [payload.order_id]);
-            if (rows.length > 0) {
-              const files = await client.query('SELECT file_storage_key FROM order_files WHERE order_id = $1', [rows[0].id]);
-              const keysToDelete = files.rows.map((f: { file_storage_key: string }) => f.file_storage_key).filter(Boolean);
+            // Find the main order PK 'id' using the display 'order_id' (e.g. ORD-2026-...)
+            const orderRes = await client.query('SELECT id FROM orders WHERE order_id = $1', [order_id]);
+            if (orderRes.rows.length > 0) {
+              const mainId = orderRes.rows[0].id;
+
+              // 1. Get list of files linked to this order
+              const filesRes = await client.query('SELECT file_storage_key FROM order_files WHERE order_id = $1', [mainId]);
+              const keys = filesRes.rows.map((f: { file_storage_key: string }) => f.file_storage_key).filter(Boolean);
               
-              if (keysToDelete.length > 0) {
-                // Delete from CockroachDB backup storage
-                await client.query('DELETE FROM file_storage WHERE key = ANY($1)', [keysToDelete])
-                  .catch((e: Error) => console.error('DB Delete Error:', e.message));
-                  
-                // Delete permanently from Supabase Cloud to preserve 1GB free tier
-                if (process.env.VITE_SUPABASE_URL) {
-                  const { error } = await supabaseAdmin.storage.from('printease_files').remove(keysToDelete);
-
-                  if (error) console.error('Supabase Cleanup Error:', error.message);
+              if (keys.length > 0) {
+                // 2. Wipe from Supabase
+                const { error: storageError } = await supabaseAdmin.storage.from('printease_files').remove(keys);
+                if (storageError) {
+                  console.error('SUPABASE_DELETE_FAILED:', storageError.message);
+                  // @ts-ignore
+                  cleanupReport.errors.push('Supabase: ' + storageError.message);
+                } else {
+                  cleanupReport.cloud = keys.length;
                 }
+                  
+                // 3. Wipe from legacy CockroachDB file_storage table
+                const dbCleanup = await client.query('DELETE FROM file_storage WHERE key = ANY($1)', [keys]);
+                cleanupReport.database = dbCleanup.rowCount || 0;
 
-                // WIPE metadata from order_files table to keep DB clean and private
-                await client.query('DELETE FROM order_files WHERE order_id = $1', [rows[0].id]);
+                // 4. Finally wipe the metadata records from order_files
+                await client.query('DELETE FROM order_files WHERE order_id = $1', [mainId]);
               }
             }
-          } catch (e) {
-            console.error('File cleanup error:', e instanceof Error ? e.message : String(e));
+          } catch (e: any) {
+            console.error('CLEANUP_FATAL_ERROR:', e.message);
+            // @ts-ignore
+            cleanupReport.errors.push('Fatal: ' + e.message);
           }
         }
         
-        return res.json({ data: true });
+        return res.json({ 
+          success: true, 
+          status: print_status, 
+          cleanup: cleanupReport 
+        });
       }
       case 'getSubmissions': {
         const { rows } = await client.query('SELECT * FROM submissions ORDER BY created_at DESC');
