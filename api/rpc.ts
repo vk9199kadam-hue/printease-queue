@@ -273,7 +273,18 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
         return res.json({ data: true });
       }
       case 'uploadFile': {
-        await client.query('INSERT INTO file_storage (key, file_data) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET file_data = EXCLUDED.file_data', [payload.key, payload.base64]);
+        const base64Data = payload.base64.split(';base64,').pop();
+        if (!base64Data) {
+           return res.status(400).json({ error: 'Invalid file format' });
+        }
+        const buffer = Buffer.from(base64Data, 'base64');
+        const { error: storageError } = await supabaseAdmin.storage
+          .from('printease_files')
+          .upload(payload.key, buffer, {
+            contentType: payload.base64.split(';')[0].split(':')[1] || 'application/octet-stream',
+            upsert: true
+          });
+        if (storageError) throw storageError;
         return res.json({ data: true });
       }
       case 'downloadFile': {
