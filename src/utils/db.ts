@@ -81,10 +81,10 @@ export const DB = {
     const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === today);
     return {
       total_orders: todayOrders.length,
-      total_pages: todayOrders.reduce((s, o) => s + (o.total_pages || 0), 0),
+      total_pages: todayOrders.reduce((s, o) => s + Number(o.total_pages || 0), 0),
       total_revenue: todayOrders.reduce((s, o) => s + Number(o.total_amount || 0), 0),
-      bw_pages: todayOrders.reduce((s, o) => s + (o.total_bw_pages || 0), 0),
-      color_pages: todayOrders.reduce((s, o) => s + (o.total_color_pages || 0), 0),
+      bw_pages: todayOrders.reduce((s, o) => s + Number(o.total_bw_pages || 0), 0),
+      color_pages: todayOrders.reduce((s, o) => s + Number(o.total_color_pages || 0), 0),
       queued: todayOrders.filter(o => o.print_status === 'queued').length,
       printing: todayOrders.filter(o => o.print_status === 'printing').length,
       ready: todayOrders.filter(o => o.print_status === 'ready').length,
