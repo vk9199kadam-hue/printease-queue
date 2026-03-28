@@ -99,6 +99,14 @@ export default function OrderDetail() {
     }
   };
 
+  const markAsReady = async () => {
+    await DB.updateOrderStatus(order.order_id, 'ready');
+    if (order_id) {
+      const updated = await DB.getOrderById(order_id);
+      if (updated) setOrder(updated);
+    }
+  };
+
   const handleDownloadAndPrint = () => {
     order.files.forEach((file, index) => {
       // Small staggered delay between downloads to prevent browser blocking
@@ -118,7 +126,8 @@ export default function OrderDetail() {
         }
       }, index * 2000); // 2s delay between files for reliable multiple downloads
     });
-    nextStatus();
+    // Move to printing status automatically
+    if (order.print_status === 'queued') nextStatus();
   };
 
   const nextLabel: Record<string, string> = {
@@ -315,12 +324,18 @@ export default function OrderDetail() {
 
         {/* Action button */}
         {order.print_status === 'queued' ? (
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3">
             <button
               onClick={handleDownloadAndPrint}
               className="w-full py-4 rounded-xl text-primary-foreground font-bold text-lg hover:opacity-90 transition bg-amber-600 flex items-center justify-center gap-2 shadow-lg shadow-amber-700/20"
             >
               📥 Download & Start Printing
+            </button>
+            <button
+               onClick={markAsReady}
+               className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:opacity-90 transition shadow-lg shadow-emerald-700/20 flex items-center justify-center gap-2"
+            >
+               ✅ All print is downloaded, mark ready
             </button>
           </div>
         ) : order.print_status !== 'completed' ? (
