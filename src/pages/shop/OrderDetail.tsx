@@ -315,16 +315,9 @@ export default function OrderDetail() {
           <div className="flex gap-3">
             <button
               onClick={handleDownloadAndPrint}
-              className="flex-1 py-4 rounded-xl text-primary-foreground font-bold text-sm md:text-base hover:opacity-90 transition bg-amber-600 flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-xl text-primary-foreground font-bold text-lg hover:opacity-90 transition bg-amber-600 flex items-center justify-center gap-2 shadow-lg shadow-amber-700/20"
             >
-              📥 Download Files
-            </button>
-            <button
-              onClick={nextStatus}
-              className="flex-1 py-4 rounded-xl text-primary-foreground font-bold text-sm md:text-base hover:opacity-90 transition flex items-center justify-center gap-2"
-              style={{ backgroundColor: nextColor[order.print_status] || '#1B4FFF' }}
-            >
-              🖨️ Automatic Print
+              📥 Download & Start Printing
             </button>
           </div>
         ) : order.print_status !== 'completed' ? (
