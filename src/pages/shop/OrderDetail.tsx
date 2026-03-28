@@ -99,55 +99,44 @@ export default function OrderDetail() {
   };
 
   const handleDownloadAndPrint = async () => {
+    // We notify the shopkeeper nicely if popups are blocked
+    let popupBlocked = false;
+
     try {
-      // Fetch all URLs first so we can process them together
-      const fileDataList = await Promise.all(
+      // Fetch all URLs first
+      const fileUrls = await Promise.all(
         order.files.map(async (file) => {
           const url = await DB.getFile(file.file_storage_key);
-          return { url, name: file.file_name };
+          return url;
         })
       );
 
-      // Trigger downloads sequentially using iframes to bypass popup blockers
-      fileDataList.forEach((fileData, index) => {
-        if (!fileData.url) return;
+      // Open each valid URL in a new tab
+      fileUrls.forEach((url, index) => {
+        if (!url) return;
         
+        // We stagger them slightly to help browser handle multiple tabs
         setTimeout(() => {
-          try {
-            if (fileData.url.startsWith('data:')) {
-              const a = document.createElement('a');
-              a.href = fileData.url;
-              a.download = fileData.name;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-            } else {
-              const urlObj = new URL(fileData.url);
-              // Supabase specifically looks for the download parameter to force Content-Disposition attachment
-              if (!urlObj.searchParams.has('download')) {
-                urlObj.searchParams.set('download', '');
-              }
-              
-              const iframe = document.createElement('iframe');
-              iframe.style.display = 'none';
-              iframe.src = urlObj.toString();
-              document.body.appendChild(iframe);
-              
-              setTimeout(() => {
-                if (document.body.contains(iframe)) {
-                  document.body.removeChild(iframe);
-                }
-              }, 15000);
-            }
-          } catch (e) {
-            console.error('Failed to trigger download', e);
-            // Fallback for any invalid URL issues
-            window.open(fileData.url, '_blank');
+          // Open in a new tab
+          const newWindow = window.open(url, '_blank');
+          
+          // Detect if popup blocker prevented the window from opening
+          if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+            popupBlocked = true;
           }
-        }, index * 1000);
+        }, index * 500); 
       });
 
+      // Update the status on the dashboard implicitly
       nextStatus();
+      
+      // If popup blocker struck, we can log it (the shopkeeper might see the browser warning)
+      setTimeout(() => {
+        if (popupBlocked) {
+           alert("Please 'Allow Pop-ups' for PrintEase to automatically open multiple files for printing!");
+        }
+      }, 1000);
+
     } catch (e) {
       console.error('Error fetching file URLs', e);
     }
