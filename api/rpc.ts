@@ -213,7 +213,7 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
                   
                 // Delete permanently from Supabase Cloud to preserve 1GB free tier
                 if (process.env.VITE_SUPABASE_URL) {
-                  const { error } = await supabaseAdmin.storage.from('PRINTEASE_FILES').remove(keysToDelete);
+                  const { error } = await supabaseAdmin.storage.from('printease_files').remove(keysToDelete);
 
                   if (error) console.error('Supabase Cleanup Error:', error.message);
                 }
