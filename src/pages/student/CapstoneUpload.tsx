@@ -56,8 +56,10 @@ export default function CapstoneUpload() {
         file_size_kb: Math.round(file.size / 1024),
       };
       setUploadedFile(item);
-    } catch {
-      showToast('Failed to save file.');
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Supabase Upload Error:', err);
+      showToast('Cloud Upload Failed: ' + (err.message || 'Check bucket permissions.'));
     }
   };
 

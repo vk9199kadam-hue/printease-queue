@@ -54,15 +54,17 @@ export default function FileUpload() {
         file_size_kb: Math.round(file.size / 1024),
       };
       setUploadedFiles(prev => [...prev, item]);
-    } catch {
-      showToast('Failed to save file. Storage might be full.');
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Supabase Upload Error:', err);
+      showToast('Cloud Upload Failed: ' + (err.message || 'Check bucket permissions.'));
     }
   };
 
   const removeFile = async (temp_id: string) => {
     const file = uploadedFiles.find(f => f.temp_id === temp_id);
     if (file) {
-       await supabase.storage.from('print_files').remove([file.file_storage_key]);
+       await supabase.storage.from('PRINTEASE_FILES').remove([file.file_storage_key]);
     }
     setUploadedFiles(prev => prev.filter(f => f.temp_id !== temp_id));
   };

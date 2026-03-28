@@ -11,7 +11,7 @@ export async function uploadFileToCloud(file: File, key: string): Promise<string
   }
 
   const { data, error } = await supabase.storage
-    .from('print_files')
+    .from('PRINTEASE_FILES')
     .upload(key, file, {
       cacheControl: '3600',
       upsert: false
@@ -23,14 +23,13 @@ export async function uploadFileToCloud(file: File, key: string): Promise<string
   }
 
   const { data: publicUrlData } = supabase.storage
-    .from('print_files')
+    .from('PRINTEASE_FILES')
     .getPublicUrl(key);
 
   return publicUrlData.publicUrl;
 }
 
 export function downloadFile(url: string, filename: string): void {
-  // Now handles URLs instead of base64
   const link = document.createElement('a');
   link.href = url;
   link.download = filename;
@@ -46,6 +45,5 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function generateStorageKey(filename: string): string {
-  // Make the key safe for Supabase URLs
   return Date.now() + '_' + Math.random().toString(36).substring(7) + '_' + filename.replace(/[^a-zA-Z0-9.]/g, '_');
 }
