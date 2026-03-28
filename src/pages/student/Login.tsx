@@ -44,8 +44,9 @@ export default function StudentLogin() {
     setLoading(true);
     await new Promise(r => setTimeout(r, 500));
     
-    const user = await DB.getUserByEmail(email.toLowerCase());
-    if (user && user.password === password) {
+    // Secure verification directly via backend
+    const user = await DB.verifyStudent(email.toLowerCase(), password);
+    if (user) {
       login(user, 'student');
       navigate('/student/dashboard', { replace: true });
     } else {

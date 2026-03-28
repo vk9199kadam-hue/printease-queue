@@ -25,6 +25,10 @@ export const CockroachDB = {
     return await rpc('getUserByEmail', { email }).catch(() => null);
   },
 
+  async verifyStudent(email: string, password: string): Promise<User | null> {
+    return await rpc('verifyStudent', { email, password }).catch(() => null);
+  },
+
   async createUser(data: { name: string; email: string; password?: string; gender: string }): Promise<User | null> {
     const year = new Date().getFullYear();
     const count = Math.floor(Math.random() * 1000).toString().padStart(3, '0');

@@ -13,6 +13,9 @@ export const DB = {
   async getUserByEmail(email: string): Promise<User | null> {
     return CockroachDB.getUserByEmail(email);
   },
+  async verifyStudent(email: string, password: string): Promise<User | null> {
+    return CockroachDB.verifyStudent(email, password);
+  },
   async getUserById(id: string): Promise<User | null> {
     return CockroachDB.getUserById(id);
   },

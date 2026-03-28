@@ -145,6 +145,26 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
         delete shopkeeper.password;
         return res.json({ data: shopkeeper });
       }
+      case 'verifyStudent': {
+        const { rows } = await client.query('SELECT * FROM users WHERE email = $1', [payload.email]);
+        if (rows.length === 0) return res.json({ data: null });
+        
+        const user = rows[0];
+        let isValid = false;
+        // User passwords could be hashed or plain text depending on age of account
+        if (user.password === payload.password) {
+           isValid = true;
+           const newHash = await bcrypt.hash(payload.password, 10);
+           await client.query('UPDATE users SET password = $1 WHERE id = $2', [newHash, user.id]);
+        } else {
+           isValid = await bcrypt.compare(payload.password, user.password);
+        }
+        
+        if (!isValid) return res.json({ data: null });
+        
+        delete user.password;
+        return res.json({ data: user });
+      }
       case 'getPaidOrders': {
         const { rows } = await client.query('SELECT * FROM orders WHERE payment_status = \'paid\' ORDER BY created_at DESC');
         if (rows.length > 0) {
