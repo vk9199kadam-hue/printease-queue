@@ -11,20 +11,18 @@ export async function uploadFileToCloud(file: File, key: string): Promise<string
   }
 
   const { data, error } = await supabase.storage
-    .from('PRINTEASE_FILES')
+    .from('printease_files')
     .upload(key, file, {
       cacheControl: '3600',
       upsert: false
     });
 
   if (error) {
-    const { data: buckets } = await supabase.storage.listBuckets();
-    console.error('Available Buckets:', buckets?.map(b => b.name)); 
     throw new Error('Cloud upload failed: ' + error.message);
   }
 
   const { data: publicUrlData } = supabase.storage
-    .from('PRINTEASE_FILES')
+    .from('printease_files')
     .getPublicUrl(key);
 
   return publicUrlData.publicUrl;

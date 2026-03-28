@@ -64,7 +64,7 @@ export default function FileUpload() {
   const removeFile = async (temp_id: string) => {
     const file = uploadedFiles.find(f => f.temp_id === temp_id);
     if (file) {
-       await supabase.storage.from('PRINTEASE_FILES').remove([file.file_storage_key]);
+       await supabase.storage.from('printease_files').remove([file.file_storage_key]);
     }
     setUploadedFiles(prev => prev.filter(f => f.temp_id !== temp_id));
   };
