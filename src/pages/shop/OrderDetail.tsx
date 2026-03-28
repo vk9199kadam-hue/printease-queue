@@ -77,10 +77,9 @@ export default function OrderDetail() {
       if (fileUrl) {
         const a = document.createElement('a');
         a.href = fileUrl;
+        a.target = '_blank';
         a.download = file.file_name;
-        document.body.appendChild(a);
         a.click();
-        setTimeout(() => document.body.removeChild(a), 100);
       }
     } catch (e) {
       console.error('Failed to download file', e);
@@ -99,33 +98,59 @@ export default function OrderDetail() {
     }
   };
 
-  const markAsReady = async () => {
-    await DB.updateOrderStatus(order.order_id, 'ready');
-    if (order_id) {
-      const updated = await DB.getOrderById(order_id);
-      if (updated) setOrder(updated);
-    }
-  };
+  const handleDownloadAndPrint = async () => {
+    try {
+      // Fetch all URLs first so we can process them together
+      const fileDataList = await Promise.all(
+        order.files.map(async (file) => {
+          const url = await DB.getFile(file.file_storage_key);
+          return { url, name: file.file_name };
+        })
+      );
 
-  const handleDownloadAndPrint = () => {
-    order.files.forEach((file, index) => {
-      // Small staggered delay between downloads to prevent browser blocking
-      setTimeout(async () => {
-        try {
-          const fileUrl = await DB.getFile(file.file_storage_key);
-          if (fileUrl) {
-            const a = document.createElement('a');
-            a.href = fileUrl;
-            a.download = file.file_name;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => document.body.removeChild(a), 100);
+      // Trigger downloads sequentially using iframes to bypass popup blockers
+      fileDataList.forEach((fileData, index) => {
+        if (!fileData.url) return;
+        
+        setTimeout(() => {
+          try {
+            if (fileData.url.startsWith('data:')) {
+              const a = document.createElement('a');
+              a.href = fileData.url;
+              a.download = fileData.name;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+            } else {
+              const urlObj = new URL(fileData.url);
+              // Supabase specifically looks for the download parameter to force Content-Disposition attachment
+              if (!urlObj.searchParams.has('download')) {
+                urlObj.searchParams.set('download', '');
+              }
+              
+              const iframe = document.createElement('iframe');
+              iframe.style.display = 'none';
+              iframe.src = urlObj.toString();
+              document.body.appendChild(iframe);
+              
+              setTimeout(() => {
+                if (document.body.contains(iframe)) {
+                  document.body.removeChild(iframe);
+                }
+              }, 15000);
+            }
+          } catch (e) {
+            console.error('Failed to trigger download', e);
+            // Fallback for any invalid URL issues
+            window.open(fileData.url, '_blank');
           }
-        } catch (e) {
-          console.error('Failed to download file', e);
-        }
-      }, index * 2000); // 2s delay between files for reliable multiple downloads
-    });
+        }, index * 1000);
+      });
+
+      nextStatus();
+    } catch (e) {
+      console.error('Error fetching file URLs', e);
+    }
   };
 
   const nextLabel: Record<string, string> = {
@@ -322,20 +347,12 @@ export default function OrderDetail() {
 
         {/* Action button */}
         {order.print_status === 'queued' ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex gap-3">
             <button
               onClick={handleDownloadAndPrint}
-              className="w-full py-4 rounded-xl text-primary-foreground font-bold text-lg hover:opacity-90 transition bg-blue-primary shadow-lg shadow-blue-primary/20 flex flex-col items-center justify-center gap-1"
+              className="w-full py-4 rounded-xl text-primary-foreground font-bold text-lg hover:opacity-90 transition bg-amber-600 flex items-center justify-center gap-2 shadow-lg shadow-amber-700/20"
             >
-              <span className="flex items-center gap-2">📥 Download All Files</span>
-              <span className="text-[10px] opacity-80 uppercase tracking-wide">Save all files to your device</span>
-            </button>
-            <button
-               onClick={markAsReady}
-               className="w-full py-4 rounded-xl bg-emerald-600 text-white font-bold text-lg hover:opacity-90 transition shadow-lg shadow-emerald-700/20 flex flex-col items-center justify-center gap-1 mt-2"
-            >
-               <span className="flex items-center gap-2">✅ I downloaded all files, mark ready</span>
-               <span className="text-[10px] opacity-80 uppercase tracking-wide">Notify student to collect order</span>
+              📥 Download & Start Printing
             </button>
           </div>
         ) : order.print_status !== 'completed' ? (
