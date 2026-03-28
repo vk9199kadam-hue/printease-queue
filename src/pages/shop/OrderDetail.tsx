@@ -184,7 +184,7 @@ export default function OrderDetail() {
              </div>
              {order.contact_number && (
                 <a href={`tel:${order.contact_number}`} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20 active:scale-95 transition">
-                   <Phone size={14} /> CALL STUDENT
+                   <Phone size={14} /> {order.contact_number}
                 </a>
              )}
           </div>
@@ -228,7 +228,7 @@ export default function OrderDetail() {
                  onClick={() => window.location.href = `tel:${order.contact_number}`}
                  className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-700/20 hover:bg-emerald-700 transition flex items-center justify-center gap-2"
                >
-                 <Phone size={18} /> CALL STUDENT NOW
+                 <Phone size={18} /> {order.contact_number}
                </button>
             </div>
           </div>
