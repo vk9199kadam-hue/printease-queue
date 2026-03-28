@@ -327,15 +327,17 @@ export default function OrderDetail() {
           <div className="flex flex-col gap-3">
             <button
               onClick={handleDownloadAndPrint}
-              className="w-full py-4 rounded-xl text-primary-foreground font-bold text-lg hover:opacity-90 transition bg-amber-600 flex items-center justify-center gap-2 shadow-lg shadow-amber-700/20"
+              className="w-full py-4 rounded-xl text-primary-foreground font-bold text-lg hover:opacity-90 transition bg-amber-600 flex flex-col items-center justify-center gap-1 shadow-lg shadow-amber-700/20"
             >
-              📥 Download & Start Printing
+              <span className="flex items-center gap-2">📥 Download All & Start Printing</span>
+              <span className="text-[10px] opacity-70 uppercase tracking-tighter">Standard automated flow</span>
             </button>
             <button
                onClick={markAsReady}
-               className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:opacity-90 transition shadow-lg shadow-emerald-700/20 flex items-center justify-center gap-2"
+               className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold hover:opacity-90 transition shadow-lg shadow-emerald-700/20 flex flex-col items-center justify-center gap-1"
             >
-               ✅ All print is downloaded, mark ready
+               <span className="flex items-center gap-2 text-sm leading-none">✅ Mark Ready</span>
+               <span className="text-[10px] opacity-70 uppercase tracking-tighter">Fast-track flow for manual handling</span>
             </button>
           </div>
         ) : order.print_status !== 'completed' ? (
