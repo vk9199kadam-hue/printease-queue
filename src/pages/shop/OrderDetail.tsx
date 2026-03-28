@@ -77,9 +77,10 @@ export default function OrderDetail() {
       if (fileUrl) {
         const a = document.createElement('a');
         a.href = fileUrl;
-        a.target = '_blank';
         a.download = file.file_name;
+        document.body.appendChild(a);
         a.click();
+        setTimeout(() => document.body.removeChild(a), 100);
       }
     } catch (e) {
       console.error('Failed to download file', e);
@@ -100,20 +101,22 @@ export default function OrderDetail() {
 
   const handleDownloadAndPrint = () => {
     order.files.forEach((file, index) => {
+      // Small staggered delay between downloads to prevent browser blocking
       setTimeout(async () => {
         try {
           const fileUrl = await DB.getFile(file.file_storage_key);
           if (fileUrl) {
             const a = document.createElement('a');
             a.href = fileUrl;
-            a.target = '_blank';
             a.download = file.file_name;
+            document.body.appendChild(a);
             a.click();
+            setTimeout(() => document.body.removeChild(a), 100);
           }
         } catch (e) {
           console.error('Failed to download file', e);
         }
-      }, index * 1000);
+      }, index * 2000); // 2s delay between files for reliable multiple downloads
     });
     nextStatus();
   };
