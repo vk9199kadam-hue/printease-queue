@@ -1,4 +1,12 @@
 import { Pool } from 'pg';
+import bcrypt from 'bcryptjs';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseAdmin = createClient(
+  process.env.VITE_SUPABASE_URL || '',
+  process.env.VITE_SUPABASE_ANON_KEY || ''
+);
+
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -12,8 +20,22 @@ pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default async function handler(req: any, res: any) {
+
+interface RPCRequest {
+  method: string;
+  body: {
+    action: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    payload: any;
+  };
+}
+
+interface RPCResponse {
+  status: (code: number) => RPCResponse;
+  json: (body: unknown) => void;
+}
+
+export default async function handler(req: RPCRequest, res: RPCResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
   const { action, payload } = req.body;
@@ -27,11 +49,12 @@ export default async function handler(req: any, res: any) {
         try {
           await pool.query('SELECT 1');
           return res.json({ status: 'ok', db_connected: true, timestamp: Date.now() });
-        } catch (dbErr: any) {
+        } catch (dbErr: unknown) {
+          const message = dbErr instanceof Error ? dbErr.message : String(dbErr);
           return res.status(500).json({ 
             status: 'db_error', 
             db_connected: false, 
-            message: dbErr.message,
+            message,
             timestamp: Date.now() 
           });
         }
@@ -94,15 +117,33 @@ export default async function handler(req: any, res: any) {
       }
       case 'createUser': {
         const { name, email, password, gender, student_print_id, is_verified } = payload;
+        const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
         const result = await client.query(
           'INSERT INTO users (name, email, password, gender, student_print_id, is_verified) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-          [name, email, password, gender, student_print_id, is_verified]
+          [name, email, hashedPassword, gender, student_print_id, is_verified]
         );
         return res.json({ data: result.rows[0] });
       }
       case 'verifyShopkeeper': {
-        const { rows } = await client.query('SELECT * FROM shopkeepers WHERE email = $1 AND password = $2', [payload.email, payload.password]);
-        return res.json({ data: rows[0] || null });
+        const { rows } = await client.query('SELECT * FROM shopkeepers WHERE email = $1', [payload.email]);
+        if (rows.length === 0) return res.json({ data: null });
+        
+        const shopkeeper = rows[0];
+        // Handle migration: if password matches plain text, update it to hash for the future
+        let isValid = false;
+        if (shopkeeper.password === payload.password) {
+           isValid = true;
+           const newHash = await bcrypt.hash(payload.password, 10);
+           await client.query('UPDATE shopkeepers SET password = $1 WHERE id = $2', [newHash, shopkeeper.id]);
+        } else {
+           isValid = await bcrypt.compare(payload.password, shopkeeper.password);
+        }
+        
+        if (!isValid) return res.json({ data: null });
+        
+        // Remove password from returned object for security
+        delete shopkeeper.password;
+        return res.json({ data: shopkeeper });
       }
       case 'getPaidOrders': {
         const { rows } = await client.query('SELECT * FROM orders WHERE payment_status = \'paid\' ORDER BY created_at DESC');
@@ -121,6 +162,21 @@ export default async function handler(req: any, res: any) {
           order.extra_services = { spiral_binding: !!order.spiral_binding, stapling: !!order.stapling };
         }
         return res.json({ data: rows });
+      }
+      case 'getAdminStats': {
+        const totalUsers = await client.query('SELECT COUNT(*) FROM users');
+        const totalShops = await client.query('SELECT COUNT(*) FROM shopkeepers');
+        const totalOrders = await client.query('SELECT COUNT(*) FROM orders');
+        const totalRevenue = await client.query("SELECT SUM(total_amount) FROM orders WHERE payment_status = 'paid'");
+
+        return res.json({
+          data: {
+            total_users: parseInt(totalUsers.rows[0].count, 10),
+            total_shops: parseInt(totalShops.rows[0].count, 10),
+            total_orders: parseInt(totalOrders.rows[0].count, 10),
+            total_revenue: parseFloat(totalRevenue.rows[0].sum || '0').toFixed(2)
+          }
+        });
       }
       case 'createOrder': {
         const { order_id, student_id, student_print_id, student_name, total_bw_pages, total_color_pages, total_pages, extra_services, service_fee, subtotal, total_amount, payment_status, print_status, qr_code, files, order_type, contact_number, college, department, receiving_date } = payload;
@@ -148,10 +204,17 @@ export default async function handler(req: any, res: any) {
             const { rows } = await client.query('SELECT id FROM orders WHERE order_id = $1', [payload.order_id]);
             if (rows.length > 0) {
               const files = await client.query('SELECT file_storage_key FROM order_files WHERE order_id = $1', [rows[0].id]);
-              for (const file of files.rows) {
-                if (file.file_storage_key) {
-                  await client.query('DELETE FROM file_storage WHERE key = $1', [file.file_storage_key])
-                    .catch((e: Error) => console.error('DB Delete Error:', e.message));
+              const keysToDelete = files.rows.map((f: { file_storage_key: string }) => f.file_storage_key).filter(Boolean);
+              
+              if (keysToDelete.length > 0) {
+                // Delete from CockroachDB backup storage
+                await client.query('DELETE FROM file_storage WHERE key = ANY($1)', [keysToDelete])
+                  .catch((e: Error) => console.error('DB Delete Error:', e.message));
+                  
+                // Delete permanently from Supabase Cloud to preserve 1GB free tier
+                if (process.env.VITE_SUPABASE_URL) {
+                  const { error } = await supabaseAdmin.storage.from('print_files').remove(keysToDelete);
+                  if (error) console.error('Supabase Cleanup Error:', error.message);
                 }
               }
             }

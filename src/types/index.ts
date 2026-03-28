@@ -78,7 +78,7 @@ export interface Pricing {
 
 export interface Session {
   user: User | Shopkeeper;
-  role: 'student' | 'shopkeeper';
+  role: 'student' | 'shopkeeper' | 'admin';
 }
 
 export interface PriceResult {

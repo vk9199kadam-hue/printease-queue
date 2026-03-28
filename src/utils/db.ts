@@ -35,11 +35,7 @@ export const DB = {
     return []; // Not used directly in UI usually
   },
   async getOrderById(order_id: string): Promise<Order | null> {
-    // CockroachDB doesn't have getOrderById natively, so we fetch all and filter or we can add it.
-    // Let's add it to CockroachDB or implement here.
-    const res = await fetch('/api/rpc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getOrderById', payload: { id: order_id } }) });
-    const data = await res.json();
-    return data.data || null;
+    return CockroachDB.getOrderById(order_id);
   },
   async getOrdersByStudentId(student_id: string): Promise<Order[]> {
     return CockroachDB.getOrdersByStudentId(student_id);
@@ -47,7 +43,7 @@ export const DB = {
   async getPaidOrders(): Promise<Order[]> {
     return CockroachDB.getPaidOrders();
   },
-  async createOrder(data: Omit<Order, 'order_id' | 'created_at' | 'updated_at'>): Promise<Order | null> {
+  async createOrder(data: Omit<Order, 'order_id' | 'created_at' | 'updated_at'> & { order_id?: string }): Promise<Order | null> {
     return CockroachDB.createOrder(data);
   },
   async updateOrderStatus(order_id: string, print_status: Order['print_status']): Promise<boolean> {

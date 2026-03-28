@@ -3,7 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Printer, BarChart3, LogOut, Search, Clock, AlertCircle, Inbox, BookOpen, Zap, MessageSquare, Settings as SettingsIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { DB } from '../../utils/db';
+import { supabase } from '../../utils/fileStorage';
 import { Order } from '../../types';
+
 import StatusBadge from '../../components/StatusBadge';
 import { playNotificationSound } from '../../utils/sound';
 
@@ -37,8 +39,20 @@ export default function ShopDashboard() {
       }
     };
     load();
-    const interval = setInterval(load, 5000);
-    return () => clearInterval(interval);
+    
+    // Convert inefficient polling to Supabase Realtime WebSockets
+    const channel = supabase
+      .channel('shop_dashboard_updates')
+      .on(
+        'postgres_changes', 
+        { event: '*', schema: 'public', table: 'orders' }, 
+        () => { if (document.visibilityState === 'visible') load(); }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const filtered = orders.filter(o => {

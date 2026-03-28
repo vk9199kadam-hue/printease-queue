@@ -82,6 +82,7 @@ export default function Payment() {
     const tempId = 'ORD-' + Date.now();
     const qr = await generateQR(tempId);
     const order = await DB.createOrder({
+      order_id: tempId,
       student_id: currentUser.id,
       student_print_id: currentUser.student_print_id,
       student_name: currentUser.name,
@@ -103,6 +104,7 @@ export default function Payment() {
       print_status: 'queued',
       qr_code: qr,
     });
+
     if (order) {
       playSuccessSound();
       navigate('/student/confirmed', { state: { order: { ...order, qr_code: qr } }, replace: true });

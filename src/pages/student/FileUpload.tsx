@@ -4,7 +4,8 @@ import { ArrowLeft, CloudUpload, X, Minus, Plus, AlertCircle } from 'lucide-reac
 import { FileItem, ExtraServices } from '../../types';
 import { DB } from '../../utils/db';
 import { getFileType, isAllowedFile, getPageCount } from '../../utils/pageCounter';
-import { fileToBase64, formatFileSize, generateStorageKey } from '../../utils/fileStorage';
+import { uploadFileToCloud, formatFileSize, generateStorageKey, supabase } from '../../utils/fileStorage';
+
 import { calcTotal } from '../../utils/priceCalculator';
 import FileTypeIcon from '../../components/FileTypeIcon';
 
@@ -26,11 +27,11 @@ export default function FileUpload() {
 
   const processFile = async (file: File) => {
     if (!isAllowedFile(file.name)) { showToast('Unsupported file type: ' + file.name); return; }
-    if (file.size > 52428800) { showToast('File too large (max 50MB)'); return; }
+    if (file.size > 4194304) { showToast('File too large (max 4MB due to Vercel limits). Please split your document.'); return; }
     const key = generateStorageKey(file.name);
     try {
-      const base64 = await fileToBase64(file);
-      await DB.saveFile(key, base64);
+      const publicUrl = await uploadFileToCloud(file, key);
+      // Removed the local DB.saveFile since it is now safely stored in the cloud bucket.
       const pageCount = await getPageCount(file);
       const fileType = getFileType(file.name);
       const ext = file.name.split('.').pop() || '';
@@ -60,7 +61,9 @@ export default function FileUpload() {
 
   const removeFile = async (temp_id: string) => {
     const file = uploadedFiles.find(f => f.temp_id === temp_id);
-    if (file) await DB.deleteFile(file.file_storage_key);
+    if (file) {
+       await supabase.storage.from('print_files').remove([file.file_storage_key]);
+    }
     setUploadedFiles(prev => prev.filter(f => f.temp_id !== temp_id));
   };
 

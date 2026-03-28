@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import { ArrowLeft, Upload, CreditCard, Clock, Printer, Bell, CheckCircle, Loader2 } from 'lucide-react';
 import { DB } from '../../utils/db';
+import { supabase } from '../../utils/fileStorage';
 import { Order } from '../../types';
 import { playReadySound } from '../../utils/sound';
+
 
 const steps = [
   { key: 'uploaded', label: 'Uploaded', icon: Upload },
@@ -15,7 +17,14 @@ const steps = [
 ];
 
 function getActiveStep(status: string) {
-  const map: Record<string, number> = { queued: 2, printing: 3, ready: 4, completed: 5 };
+  const map: Record<string, number> = { 
+    uploaded: 0, 
+    paid: 1, 
+    queued: 2, 
+    printing: 3, 
+    ready: 4, 
+    completed: 5 
+  };
   return map[status] ?? 2;
 }
 
@@ -55,10 +64,20 @@ export default function OrderTracking() {
     };
 
     load();
-    const interval = setInterval(load, 5000);
+    
+    // Subscribe to WebSockets for instant, read-free updates
+    const channel = supabase
+      .channel(`order_updates_${order_id}`)
+      .on(
+        'postgres_changes', 
+        { event: 'UPDATE', schema: 'public', table: 'orders', filter: `order_id=eq.${order_id}` }, 
+        () => { load(); }
+      )
+      .subscribe();
+
     return () => {
       isMounted = false;
-      clearInterval(interval);
+      supabase.removeChannel(channel);
     };
   }, [order_id, retryCount]);
 

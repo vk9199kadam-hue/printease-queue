@@ -1,15 +1,38 @@
-export function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsDataURL(file);
-  });
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export async function uploadFileToCloud(file: File, key: string): Promise<string> {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Supabase environment variables are missing.');
+  }
+
+  const { data, error } = await supabase.storage
+    .from('print_files')
+    .upload(key, file, {
+      cacheControl: '3600',
+      upsert: false
+    });
+
+  if (error) {
+    console.error('Supabase upload error:', error);
+    throw new Error('Cloud upload failed: ' + error.message);
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from('print_files')
+    .getPublicUrl(key);
+
+  return publicUrlData.publicUrl;
 }
 
-export function downloadFile(base64: string, filename: string): void {
+export function downloadFile(url: string, filename: string): void {
+  // Now handles URLs instead of base64
   const link = document.createElement('a');
-  link.href = base64;
+  link.href = url;
   link.download = filename;
   document.body.appendChild(link);
   link.click();
@@ -23,5 +46,6 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function generateStorageKey(filename: string): string {
-  return 'file_' + Date.now() + '_' + filename.replace(/[^a-zA-Z0-9.]/g, '_');
+  // Make the key safe for Supabase URLs
+  return Date.now() + '_' + Math.random().toString(36).substring(7) + '_' + filename.replace(/[^a-zA-Z0-9.]/g, '_');
 }

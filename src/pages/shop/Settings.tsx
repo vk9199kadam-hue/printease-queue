@@ -4,7 +4,7 @@ import { ArrowLeft, Save, LogOut, Printer, Zap, Inbox, BookOpen, BarChart3, Sett
 import { useAuth } from '../../context/AuthContext';
 import { DB } from '../../utils/db';
 
-async function rpc(action: string, payload: any = {}) {
+async function rpc(action: string, payload: Record<string, unknown> = {}) {
   const res = await fetch('/api/rpc', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

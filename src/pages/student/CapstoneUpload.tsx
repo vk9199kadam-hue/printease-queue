@@ -4,7 +4,7 @@ import { ArrowLeft, CloudUpload, X, AlertCircle, Calendar, User, Phone, School, 
 import { FileItem, ExtraServices } from '../../types';
 import { DB } from '../../utils/db';
 import { getFileType, isAllowedFile, getPageCount } from '../../utils/pageCounter';
-import { fileToBase64, generateStorageKey } from '../../utils/fileStorage';
+import { uploadFileToCloud, generateStorageKey } from '../../utils/fileStorage';
 import FileTypeIcon from '../../components/FileTypeIcon';
 
 export default function CapstoneUpload() {
@@ -31,10 +31,11 @@ export default function CapstoneUpload() {
 
   const processFile = async (file: File) => {
     if (!isAllowedFile(file.name)) { showToast('Unsupported file type: ' + file.name); return; }
+    if (file.size > 4194304) { showToast('File too large (max 4MB due to Vercel limits). Please split your document.'); return; }
     const key = generateStorageKey(file.name);
     try {
-      const base64 = await fileToBase64(file);
-      await DB.saveFile(key, base64);
+      const publicUrl = await uploadFileToCloud(file, key);
+
       const pageCount = await getPageCount(file);
       const fileType = getFileType(file.name);
       const item: FileItem = {
@@ -217,7 +218,7 @@ export default function CapstoneUpload() {
                        {['bw', 'color'].map(t => (
                          <button 
                            key={t}
-                           onClick={() => setUploadedFile({ ...uploadedFile, print_type: t as any })}
+                           onClick={() => setUploadedFile({ ...uploadedFile, print_type: t as 'bw' | 'color' })}
                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold border-2 transition
                              ${uploadedFile.print_type === t ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-input hover:border-emerald-200'}`}
                          >

@@ -48,9 +48,11 @@ export const CockroachDB = {
   },
 
   async createOrder(data: Record<string, unknown>): Promise<Order | null> {
-    const year = new Date().getFullYear();
-    const count = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    data.order_id = `ORD-${year}-${count}`;
+    if (!data.order_id) {
+      const year = new Date().getFullYear();
+      const count = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      data.order_id = `ORD-${year}-${count}`;
+    }
     return await rpc('createOrder', data).catch(e => { console.error(e); return null; });
   },
 
@@ -98,5 +100,9 @@ export const CockroachDB = {
 
   async deleteFile(key: string): Promise<boolean> {
     return await rpc('deleteFile', { key }).catch(() => false);
+  },
+
+  async getOrderById(id: string): Promise<Order | null> {
+    return await rpc('getOrderById', { id }).catch(() => null);
   }
 };

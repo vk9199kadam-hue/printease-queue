@@ -21,6 +21,7 @@ import OrderDetail from './pages/shop/OrderDetail';
 import CapstoneOrders from './pages/shop/CapstoneOrders';
 import Analytics from './pages/shop/Analytics';
 import ShopSettings from './pages/shop/Settings';
+import AdminDashboard from './pages/admin/Dashboard';
 
 function ProtectedStudentRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -33,6 +34,13 @@ function ProtectedShopRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-green-primary" size={32} /></div>;
   if (!session || session.role !== 'shopkeeper') return <Navigate to="/shop/login" replace />;
+  return <>{children}</>;
+}
+
+function ProtectedAdminRoute({ children }: { children: React.ReactNode }) {
+  const { session, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-purple-primary" size={32} /></div>;
+  if (!session || session.role !== 'admin') return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -56,6 +64,7 @@ function AppRoutes() {
       <Route path="/shop/order/:order_id" element={<ProtectedShopRoute><OrderDetail /></ProtectedShopRoute>} />
       <Route path="/shop/analytics" element={<ProtectedShopRoute><Analytics /></ProtectedShopRoute>} />
       <Route path="/shop/settings" element={<ProtectedShopRoute><ShopSettings /></ProtectedShopRoute>} />
+      <Route path="/admin/dashboard" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
