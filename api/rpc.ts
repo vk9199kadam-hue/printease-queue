@@ -257,8 +257,17 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
         return res.json({ data: true });
       }
       case 'downloadFile': {
+        // First try to get the modern cloud URL
+        const { data: publicUrlData } = supabaseAdmin.storage
+          .from('PRINTEASE_FILES')
+          .getPublicUrl(payload.key);
+        
+        // As a fallback, check if it's a legacy file in CockroachDB
         const { rows } = await client.query('SELECT file_data FROM file_storage WHERE key = $1', [payload.key]);
-        return res.json({ data: rows[0]?.file_data || null });
+        const legacyData = rows[0]?.file_data || null;
+
+        // If it's not legacy, provide the cloud URL
+        return res.json({ data: legacyData || publicUrlData.publicUrl });
       }
       case 'deleteFile': {
         await client.query('DELETE FROM file_storage WHERE key = $1', [payload.key]);
