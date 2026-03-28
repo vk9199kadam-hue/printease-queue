@@ -67,7 +67,8 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
           'ALTER TABLE orders ADD COLUMN IF NOT EXISTS department VARCHAR(255)',
           'ALTER TABLE orders ADD COLUMN IF NOT EXISTS receiving_date VARCHAR(50)',
           'ALTER TABLE shopkeepers ADD COLUMN IF NOT EXISTS upi_id VARCHAR(255)',
-          'ALTER TABLE shopkeepers ADD COLUMN IF NOT EXISTS contact_number VARCHAR(255)'
+          'ALTER TABLE shopkeepers ADD COLUMN IF NOT EXISTS contact_number VARCHAR(255)',
+          'ALTER TABLE order_files ADD COLUMN IF NOT EXISTS slides_per_page INTEGER DEFAULT 1'
         ];
         for (const sql of columns) {
           try {
@@ -110,7 +111,7 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
         const { rows } = await client.query('SELECT * FROM orders WHERE order_id = $1', [payload.id]);
         if (rows.length > 0) {
           const files = await client.query('SELECT * FROM order_files WHERE order_id = $1', [rows[0].id]);
-          rows[0].files = files.rows;
+          rows[0].files = files.rows.map((f: any) => ({ ...f, slidesPerPage: f.slides_per_page }));
           rows[0].extra_services = { spiral_binding: !!rows[0].spiral_binding, stapling: !!rows[0].stapling };
         }
         return res.json({ data: rows[0] || null });
@@ -149,7 +150,7 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
         const { rows } = await client.query('SELECT * FROM orders WHERE payment_status = \'paid\' ORDER BY created_at DESC');
         for (const order of rows) {
           const files = await client.query('SELECT * FROM order_files WHERE order_id = $1', [order.id]);
-          order.files = files.rows;
+          order.files = files.rows.map((f: any) => ({ ...f, slidesPerPage: f.slides_per_page }));
           order.extra_services = { spiral_binding: !!order.spiral_binding, stapling: !!order.stapling };
         }
         return res.json({ data: rows });
@@ -158,7 +159,7 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
         const { rows } = await client.query('SELECT * FROM orders WHERE student_id = $1 ORDER BY created_at DESC', [payload.student_id]);
         for (const order of rows) {
           const files = await client.query('SELECT * FROM order_files WHERE order_id = $1', [order.id]);
-          order.files = files.rows;
+          order.files = files.rows.map((f: any) => ({ ...f, slidesPerPage: f.slides_per_page }));
           order.extra_services = { spiral_binding: !!order.spiral_binding, stapling: !!order.stapling };
         }
         return res.json({ data: rows });
@@ -189,8 +190,8 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
         if (files && files.length > 0) {
           for (const file of files) {
             await client.query(
-              'INSERT INTO order_files (order_id, file_name, file_storage_key, file_type, file_extension, page_count, print_type, color_page_ranges, copies, sides, bw_pages, color_pages, file_price, student_note) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
-              [newOrder.id, file.file_name, file.file_storage_key, file.file_type, file.file_extension, file.page_count, file.print_type, file.color_page_ranges, file.copies, file.sides, file.bw_pages, file.color_pages, file.file_price, file.student_note]
+              'INSERT INTO order_files (order_id, file_name, file_storage_key, file_type, file_extension, page_count, print_type, color_page_ranges, copies, sides, bw_pages, color_pages, file_price, student_note, slides_per_page) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)',
+              [newOrder.id, file.file_name, file.file_storage_key, file.file_type, file.file_extension, file.page_count, file.print_type, file.color_page_ranges, file.copies, file.sides, file.bw_pages, file.color_pages, file.file_price, file.student_note, file.slidesPerPage || 1]
             );
           }
         }
