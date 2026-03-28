@@ -217,6 +217,9 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
 
                   if (error) console.error('Supabase Cleanup Error:', error.message);
                 }
+
+                // WIPE metadata from order_files table to keep DB clean and private
+                await client.query('DELETE FROM order_files WHERE order_id = $1', [rows[0].id]);
               }
             }
           } catch (e) {
