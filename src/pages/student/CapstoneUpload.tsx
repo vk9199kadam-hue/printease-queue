@@ -49,6 +49,7 @@ export default function CapstoneUpload() {
         color_page_ranges: '',
         copies: 1,
         sides: 'single',
+        slidesPerPage: 1,
         bw_pages: 0,
         color_pages: 0,
         file_price: 0,
@@ -220,9 +221,9 @@ export default function CapstoneUpload() {
                        {['bw', 'color'].map(t => (
                          <button 
                            key={t}
-                           onClick={() => setUploadedFile({ ...uploadedFile, print_type: t as 'bw' | 'color' })}
+                           onClick={() => setUploadedFile(uploadedFile ? { ...uploadedFile, print_type: t as 'bw' | 'color' } : null)}
                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold border-2 transition
-                             ${uploadedFile.print_type === t ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-input hover:border-emerald-200'}`}
+                             ${uploadedFile?.print_type === t ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-input hover:border-emerald-200'}`}
                          >
                            {t === 'bw' ? 'B&W' : 'COLOR'}
                          </button>
@@ -241,6 +242,23 @@ export default function CapstoneUpload() {
                          </button>
                     </div>
                    </div>
+                </div>
+
+                <div className="pt-4 border-t border-input">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">Pages per sheet</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {([1, 2, 4] as const).map(num => (
+                      <button
+                        key={num}
+                        onClick={() => setUploadedFile(uploadedFile ? { ...uploadedFile, slidesPerPage: num } : null)}
+                        className={`py-1.5 rounded-lg text-xs font-bold transition border-2
+                          ${(uploadedFile?.slidesPerPage || 1) === num ? 'bg-blue-primary text-white border-blue-primary' : 'bg-background text-foreground border-input hover:border-blue-primary/30'}`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1 italic">Save paper! Select how many pages to print on one side.</p>
                 </div>
               </div>
             )}

@@ -212,25 +212,23 @@ export default function FileUpload() {
               </div>
             </div>
 
-            {/* Slides Per Page (PPT Only) */}
-            {file.file_type === 'powerpoint' && (
-              <div className="animate-fade-in">
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Slides per page</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {([1, 2, 4, 6] as const).map(num => (
-                    <button
-                      key={num}
-                      onClick={() => updateFile(file.temp_id, { slidesPerPage: num })}
-                      className={`py-2 rounded-lg text-xs font-semibold transition border-2
-                        ${(file.slidesPerPage || 1) === num ? 'bg-amber-500 text-white border-amber-500' : 'bg-background text-foreground border-input'}`}
-                    >
-                      {num} {num === 1 ? 'Slide' : 'Slides'}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-1 italic">Maximum 6 slides per page as per guidelines.</p>
+            {/* Pages Per Sheet (Slides/Layout) */}
+            <div className="animate-fade-in">
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Pages per sheet</label>
+              <div className="grid grid-cols-3 gap-2">
+                {([1, 2, 4] as const).map(num => (
+                  <button
+                    key={num}
+                    onClick={() => updateFile(file.temp_id, { slidesPerPage: num })}
+                    className={`py-2 rounded-lg text-xs font-semibold transition border-2
+                      ${(file.slidesPerPage || 1) === num ? 'bg-amber-500 text-white border-amber-500' : 'bg-background text-foreground border-input hover:border-amber-500/30'}`}
+                  >
+                    {num}
+                  </button>
+                ))}
               </div>
-            )}
+              <p className="text-[10px] text-muted-foreground mt-1 italic">Save paper! Select how many pages/slides to print on one side.</p>
+            </div>
 
             {/* Notes */}
             <div>
