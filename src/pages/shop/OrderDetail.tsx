@@ -126,8 +126,6 @@ export default function OrderDetail() {
         }
       }, index * 2000); // 2s delay between files for reliable multiple downloads
     });
-    // Move to printing status automatically
-    if (order.print_status === 'queued') nextStatus();
   };
 
   const nextLabel: Record<string, string> = {
@@ -327,17 +325,17 @@ export default function OrderDetail() {
           <div className="flex flex-col gap-3">
             <button
               onClick={handleDownloadAndPrint}
-              className="w-full py-4 rounded-xl text-primary-foreground font-bold text-lg hover:opacity-90 transition bg-amber-600 flex flex-col items-center justify-center gap-1 shadow-lg shadow-amber-700/20"
+              className="w-full py-4 rounded-xl text-primary-foreground font-bold text-lg hover:opacity-90 transition bg-blue-primary shadow-lg shadow-blue-primary/20 flex flex-col items-center justify-center gap-1"
             >
-              <span className="flex items-center gap-2">📥 Download All & Start Printing</span>
-              <span className="text-[10px] opacity-70 uppercase tracking-tighter">Standard automated flow</span>
+              <span className="flex items-center gap-2">📥 Download All Files</span>
+              <span className="text-[10px] opacity-80 uppercase tracking-wide">Save all files to your device</span>
             </button>
             <button
                onClick={markAsReady}
-               className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold hover:opacity-90 transition shadow-lg shadow-emerald-700/20 flex flex-col items-center justify-center gap-1"
+               className="w-full py-4 rounded-xl bg-emerald-600 text-white font-bold text-lg hover:opacity-90 transition shadow-lg shadow-emerald-700/20 flex flex-col items-center justify-center gap-1 mt-2"
             >
-               <span className="flex items-center gap-2 text-sm leading-none">✅ Mark Ready</span>
-               <span className="text-[10px] opacity-70 uppercase tracking-tighter">Fast-track flow for manual handling</span>
+               <span className="flex items-center gap-2">✅ I downloaded all files, mark ready</span>
+               <span className="text-[10px] opacity-80 uppercase tracking-wide">Notify student to collect order</span>
             </button>
           </div>
         ) : order.print_status !== 'completed' ? (
