@@ -67,8 +67,7 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
           'ALTER TABLE orders ADD COLUMN IF NOT EXISTS department VARCHAR(255)',
           'ALTER TABLE orders ADD COLUMN IF NOT EXISTS receiving_date VARCHAR(50)',
           'ALTER TABLE shopkeepers ADD COLUMN IF NOT EXISTS upi_id VARCHAR(255)',
-          'ALTER TABLE shopkeepers ADD COLUMN IF NOT EXISTS contact_number VARCHAR(255)',
-          'ALTER TABLE order_files ADD COLUMN IF NOT EXISTS slides_per_page INTEGER DEFAULT 1'
+          'ALTER TABLE shopkeepers ADD COLUMN IF NOT EXISTS contact_number VARCHAR(255)'
         ];
         for (const sql of columns) {
           try {
@@ -96,22 +95,22 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
         return res.json({ data: result.rows[0] });
       }
       case 'getUsers': {
-        const { rows } = await client.query('SELECT * FROM users');
+        const { rows } = await client.query('SELECT id, name, email, gender, student_print_id, is_verified, created_at FROM users');
         return res.json({ data: rows });
       }
       case 'getUserById': {
-        const { rows } = await client.query('SELECT * FROM users WHERE id = $1', [payload.id]);
+        const { rows } = await client.query('SELECT id, name, email, gender, student_print_id, is_verified, created_at FROM users WHERE id = $1', [payload.id]);
         return res.json({ data: rows[0] || null });
       }
       case 'getUserByEmail': {
-        const { rows } = await client.query('SELECT * FROM users WHERE email = $1', [payload.email]);
+        const { rows } = await client.query('SELECT id, name, email, gender, student_print_id, is_verified, created_at FROM users WHERE email = $1', [payload.email]);
         return res.json({ data: rows[0] || null });
       }
       case 'getOrderById': {
         const { rows } = await client.query('SELECT * FROM orders WHERE order_id = $1', [payload.id]);
         if (rows.length > 0) {
           const files = await client.query('SELECT * FROM order_files WHERE order_id = $1', [rows[0].id]);
-          rows[0].files = files.rows.map((f: any) => ({ ...f, slidesPerPage: f.slides_per_page }));
+          rows[0].files = files.rows;
           rows[0].extra_services = { spiral_binding: !!rows[0].spiral_binding, stapling: !!rows[0].stapling };
         }
         return res.json({ data: rows[0] || null });
@@ -120,7 +119,7 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
         const { name, email, password, gender, student_print_id, is_verified } = payload;
         const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
         const result = await client.query(
-          'INSERT INTO users (name, email, password, gender, student_print_id, is_verified) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+          'INSERT INTO users (name, email, password, gender, student_print_id, is_verified) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, gender, student_print_id, is_verified, created_at',
           [name, email, hashedPassword, gender, student_print_id, is_verified]
         );
         return res.json({ data: result.rows[0] });
@@ -148,19 +147,25 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
       }
       case 'getPaidOrders': {
         const { rows } = await client.query('SELECT * FROM orders WHERE payment_status = \'paid\' ORDER BY created_at DESC');
-        for (const order of rows) {
-          const files = await client.query('SELECT * FROM order_files WHERE order_id = $1', [order.id]);
-          order.files = files.rows.map((f: any) => ({ ...f, slidesPerPage: f.slides_per_page }));
-          order.extra_services = { spiral_binding: !!order.spiral_binding, stapling: !!order.stapling };
+        if (rows.length > 0) {
+          const orderIds = rows.map((r: any) => r.id);
+          const { rows: allFiles } = await client.query('SELECT * FROM order_files WHERE order_id = ANY($1::uuid[])', [orderIds]);
+          rows.forEach((order: any) => {
+            order.files = allFiles.filter((f: any) => f.order_id === order.id);
+            order.extra_services = { spiral_binding: !!order.spiral_binding, stapling: !!order.stapling };
+          });
         }
         return res.json({ data: rows });
       }
       case 'getOrdersByStudentId': {
         const { rows } = await client.query('SELECT * FROM orders WHERE student_id = $1 ORDER BY created_at DESC', [payload.student_id]);
-        for (const order of rows) {
-          const files = await client.query('SELECT * FROM order_files WHERE order_id = $1', [order.id]);
-          order.files = files.rows.map((f: any) => ({ ...f, slidesPerPage: f.slides_per_page }));
-          order.extra_services = { spiral_binding: !!order.spiral_binding, stapling: !!order.stapling };
+        if (rows.length > 0) {
+          const orderIds = rows.map((r: any) => r.id);
+          const { rows: allFiles } = await client.query('SELECT * FROM order_files WHERE order_id = ANY($1::uuid[])', [orderIds]);
+          rows.forEach((order: any) => {
+            order.files = allFiles.filter((f: any) => f.order_id === order.id);
+            order.extra_services = { spiral_binding: !!order.spiral_binding, stapling: !!order.stapling };
+          });
         }
         return res.json({ data: rows });
       }
@@ -190,8 +195,8 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
         if (files && files.length > 0) {
           for (const file of files) {
             await client.query(
-              'INSERT INTO order_files (order_id, file_name, file_storage_key, file_type, file_extension, page_count, print_type, color_page_ranges, copies, sides, bw_pages, color_pages, file_price, student_note, slides_per_page) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)',
-              [newOrder.id, file.file_name, file.file_storage_key, file.file_type, file.file_extension, file.page_count, file.print_type, file.color_page_ranges, file.copies, file.sides, file.bw_pages, file.color_pages, file.file_price, file.student_note, file.slidesPerPage || 1]
+              'INSERT INTO order_files (order_id, file_name, file_storage_key, file_type, file_extension, page_count, print_type, color_page_ranges, copies, sides, bw_pages, color_pages, file_price, student_note) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
+              [newOrder.id, file.file_name, file.file_storage_key, file.file_type, file.file_extension, file.page_count, file.print_type, file.color_page_ranges, file.copies, file.sides, file.bw_pages, file.color_pages, file.file_price, file.student_note]
             );
           }
         }
@@ -248,9 +253,12 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
       }
       case 'getSubmissions': {
         const { rows } = await client.query('SELECT * FROM submissions ORDER BY created_at DESC');
-        for (const sub of rows) {
-          const notices = await client.query('SELECT * FROM notices WHERE submission_id = $1', [sub.id]);
-          sub.notices = notices.rows;
+        if (rows.length > 0) {
+          const subIds = rows.map((r: any) => r.id);
+          const { rows: allNotices } = await client.query('SELECT * FROM notices WHERE submission_id = ANY($1::uuid[])', [subIds]);
+          rows.forEach((sub: any) => {
+            sub.notices = allNotices.filter((n: any) => n.submission_id === sub.id);
+          });
         }
         return res.json({ data: rows });
       }
@@ -273,18 +281,7 @@ export default async function handler(req: RPCRequest, res: RPCResponse) {
         return res.json({ data: true });
       }
       case 'uploadFile': {
-        const base64Data = payload.base64.split(';base64,').pop();
-        if (!base64Data) {
-           return res.status(400).json({ error: 'Invalid file format' });
-        }
-        const buffer = Buffer.from(base64Data, 'base64');
-        const { error: storageError } = await supabaseAdmin.storage
-          .from('printease_files')
-          .upload(payload.key, buffer, {
-            contentType: payload.base64.split(';')[0].split(':')[1] || 'application/octet-stream',
-            upsert: true
-          });
-        if (storageError) throw storageError;
+        await client.query('INSERT INTO file_storage (key, file_data) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET file_data = EXCLUDED.file_data', [payload.key, payload.base64]);
         return res.json({ data: true });
       }
       case 'downloadFile': {
