@@ -66,7 +66,7 @@ export const DB = {
   },
   getPricing(): Pricing {
     const data = localStorage.getItem(KEYS.PRICING);
-    return data ? JSON.parse(data) : { bw_rate: 1, color_rate: 4, spiral_binding_fee: 20, stapling_fee: 5, capstone_page_rate: 4, capstone_urgent_fee: 180, capstone_non_urgent_fee: 140 };
+    return data ? JSON.parse(data) : { bw_rate: 1, color_rate: 4, spiral_binding_fee: 20, stapling_fee: 0, capstone_page_rate: 4, capstone_urgent_fee: 180, capstone_non_urgent_fee: 140 };
   },
   savePricing(pricing: Pricing): void {
     localStorage.setItem(KEYS.PRICING, JSON.stringify(pricing));
