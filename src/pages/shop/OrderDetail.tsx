@@ -5,6 +5,7 @@ import { DB } from '../../utils/db';
 import { Order, FileItem } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 import FileTypeIcon from '../../components/FileTypeIcon';
+import { supabase } from '../../utils/fileStorage';
 
 const statusFlow: Order['print_status'][] = ['queued', 'printing', 'ready', 'completed'];
 
@@ -91,6 +92,17 @@ export default function OrderDetail() {
     if (currentIdx < statusFlow.length - 1) {
       const next = statusFlow[currentIdx + 1];
       await DB.updateOrderStatus(order.order_id, next);
+
+      // When order is completed → delete all files from Supabase storage
+      if (next === 'completed' && order.files.length > 0) {
+        const keys = order.files.map(f => f.file_storage_key).filter(Boolean);
+        if (keys.length > 0) {
+          const { error } = await supabase.storage.from('printease_files').remove(keys);
+          if (error) console.error('Storage cleanup error:', error.message);
+          else console.log(`🗑️ Deleted ${keys.length} files from storage for order ${order.order_id}`);
+        }
+      }
+
       if (order_id) {
         const updated = await DB.getOrderById(order_id);
         if (updated) setOrder(updated);
