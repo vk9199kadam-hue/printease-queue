@@ -15,6 +15,8 @@ export default function OrderDetail() {
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [filesDownloaded, setFilesDownloaded] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!order_id) return;
@@ -110,47 +112,59 @@ export default function OrderDetail() {
     }
   };
 
-  const handleDownloadAndPrint = async () => {
-    // We notify the shopkeeper nicely if popups are blocked
+  const handleDownloadAll = async () => {
+    setDownloading(true);
     let popupBlocked = false;
-
     try {
-      // Fetch all URLs first
       const fileUrls = await Promise.all(
         order.files.map(async (file) => {
           const url = await DB.getFile(file.file_storage_key);
           return url;
         })
       );
-
-      // Open each valid URL in a new tab
       fileUrls.forEach((url, index) => {
         if (!url) return;
-        
-        // We stagger them slightly to help browser handle multiple tabs
         setTimeout(() => {
-          // Open in a new tab
           const newWindow = window.open(url, '_blank');
-          
-          // Detect if popup blocker prevented the window from opening
           if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
             popupBlocked = true;
           }
-        }, index * 500); 
+        }, index * 500);
       });
-
-      // Update the status on the dashboard implicitly
-      nextStatus();
-      
-      // If popup blocker struck, we can log it (the shopkeeper might see the browser warning)
+      setFilesDownloaded(true);
       setTimeout(() => {
         if (popupBlocked) {
-           alert("Please 'Allow Pop-ups' for PrintEase to automatically open multiple files for printing!");
+          alert("Please 'Allow Pop-ups' for PrintEase to open multiple files!");
         }
       }, 1000);
-
     } catch (e) {
       console.error('Error fetching file URLs', e);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleMarkReady = async () => {
+    // Skip 'printing', go straight from queued → ready
+    await DB.updateOrderStatus(order.order_id, 'ready');
+    if (order_id) {
+      const updated = await DB.getOrderById(order_id);
+      if (updated) setOrder(updated);
+    }
+  };
+
+  const handleMarkCollected = async () => {
+    await DB.updateOrderStatus(order.order_id, 'completed');
+    // Delete files from Supabase storage
+    const keys = order.files.map(f => f.file_storage_key).filter(Boolean);
+    if (keys.length > 0) {
+      const { error } = await supabase.storage.from('printease_files').remove(keys);
+      if (error) console.error('Storage cleanup error:', error.message);
+      else console.log(`🗑️ Deleted ${keys.length} files for order ${order.order_id}`);
+    }
+    if (order_id) {
+      const updated = await DB.getOrderById(order_id);
+      if (updated) setOrder(updated);
     }
   };
 
@@ -346,27 +360,55 @@ export default function OrderDetail() {
           </div>
         )}
 
-        {/* Action button */}
-        {order.print_status === 'queued' ? (
-          <div className="flex gap-3">
+        {/* Action Buttons - 3 Step Flow */}
+        {order.print_status === 'queued' && (
+          <div className="space-y-3">
+            {/* Step 1: Download */}
+            <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-4">
+              <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-3">Step 1 — Print the Files</p>
+              <button
+                onClick={handleDownloadAll}
+                disabled={downloading}
+                className="w-full py-4 rounded-xl bg-amber-500 text-white font-bold text-lg hover:bg-amber-600 transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/30 disabled:opacity-60"
+              >
+                {downloading ? <Loader2 className="animate-spin" size={20} /> : '📥'}
+                {downloading ? 'Opening Files...' : `Download All Files (${order.files.length})`}
+              </button>
+              {filesDownloaded && (
+                <p className="text-xs text-amber-700 font-semibold text-center mt-2">✔ Files opened — Print them now!</p>
+              )}
+            </div>
+
+            {/* Step 2: Mark Ready — only enabled after download */}
+            <div className={`rounded-2xl p-4 border-2 transition-all ${filesDownloaded ? 'bg-green-50 border-green-500' : 'bg-gray-50 border-gray-200 opacity-50'}`}>
+              <p className={`text-xs font-bold uppercase tracking-wider mb-3 ${filesDownloaded ? 'text-green-700' : 'text-gray-400'}`}>Step 2 — After Printing Done</p>
+              <button
+                onClick={handleMarkReady}
+                disabled={!filesDownloaded}
+                className="w-full py-4 rounded-xl text-white font-bold text-lg transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ backgroundColor: filesDownloaded ? '#0D6B3E' : '#9CA3AF' }}
+              >
+                ✅ Mark as Ready
+              </button>
+            </div>
+          </div>
+        )}
+
+        {order.print_status === 'ready' && (
+          <div className="bg-blue-50 border-2 border-blue-500 rounded-2xl p-4">
+            <p className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-3">Step 3 — Student Pickup</p>
             <button
-              onClick={handleDownloadAndPrint}
-              className="w-full py-4 rounded-xl text-primary-foreground font-bold text-lg hover:opacity-90 transition bg-amber-600 flex items-center justify-center gap-2 shadow-lg shadow-amber-700/20"
+              onClick={handleMarkCollected}
+              className="w-full py-4 rounded-xl bg-blue-primary text-white font-bold text-lg hover:opacity-90 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30"
             >
-              📥 Download & Start Printing
+              📦 Mark as Collected
             </button>
           </div>
-        ) : order.print_status !== 'completed' ? (
-          <button
-            onClick={nextStatus}
-            className="w-full py-4 rounded-xl text-primary-foreground font-bold text-lg hover:opacity-90 transition"
-            style={{ backgroundColor: nextColor[order.print_status] || '#0D6B3E' }}
-          >
-            {nextLabel[order.print_status] || 'Update'}
-          </button>
-        ) : (
+        )}
+
+        {order.print_status === 'completed' && (
           <div className="bg-green-light rounded-xl p-4 text-center text-green-primary font-semibold flex items-center justify-center gap-2">
-            <CheckCircle size={18} /> Order Completed
+            <CheckCircle size={18} /> Order Completed & Files Cleaned
           </div>
         )}
       </div>
