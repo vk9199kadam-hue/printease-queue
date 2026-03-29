@@ -19,7 +19,7 @@ function parseColorPageRanges(rangeStr: string, totalPages: number): number {
   return pages.size;
 }
 
-export function calcFilePrice(file: FileItem, pricing: Pricing): { bw_pages: number; color_pages: number; file_price: number } {
+export function calcFilePrice(file: FileItem, pricing: Pricing, isCapstone: boolean = false): { bw_pages: number; color_pages: number; file_price: number } {
   let pages = file.page_count || 1;
   // Apply slides per page reduction for all files
   if (file.slidesPerPage && file.slidesPerPage > 1) {
@@ -49,13 +49,15 @@ export function calcFilePrice(file: FileItem, pricing: Pricing): { bw_pages: num
     color_pages = Math.ceil(color_pages / 2);
   }
 
-  const file_price = bw_pages * pricing.bw_rate + color_pages * pricing.color_rate;
+  const bw_rate = (isCapstone && pricing.capstone_page_rate) ? pricing.capstone_page_rate : pricing.bw_rate;
+  const color_rate = (isCapstone && pricing.capstone_page_rate) ? pricing.capstone_page_rate : pricing.color_rate;
+  const file_price = bw_pages * bw_rate + color_pages * color_rate;
   return { bw_pages, color_pages, file_price };
 }
 
-export function calcTotal(files: FileItem[], extras: ExtraServices, pricing: Pricing): PriceResult {
+export function calcTotal(files: FileItem[], extras: ExtraServices, pricing: Pricing, isCapstone: boolean = false): PriceResult {
   const itemized = files.map(file => {
-    const calc = calcFilePrice(file, pricing);
+    const calc = calcFilePrice(file, pricing, isCapstone);
     return {
       file_name: file.file_name,
       bw_pages: calc.bw_pages,
@@ -66,7 +68,16 @@ export function calcTotal(files: FileItem[], extras: ExtraServices, pricing: Pri
   });
   const subtotal = itemized.reduce((sum, item) => sum + item.file_price, 0);
   let service_fee = 0;
-  if (extras.spiral_binding) service_fee += pricing.spiral_binding_fee;
-  if (extras.stapling) service_fee += pricing.stapling_fee;
+  if (isCapstone) {
+    if (extras.capstone_embossing === 'urgent' && pricing.capstone_urgent_fee) {
+      service_fee += pricing.capstone_urgent_fee;
+    } else if (extras.capstone_embossing === 'non-urgent' && pricing.capstone_non_urgent_fee) {
+      service_fee += pricing.capstone_non_urgent_fee;
+    }
+    if (extras.spiral_binding) service_fee += pricing.spiral_binding_fee;
+  } else {
+    if (extras.spiral_binding) service_fee += pricing.spiral_binding_fee;
+    if (extras.stapling) service_fee += pricing.stapling_fee;
+  }
   return { itemized, subtotal, service_fee, total_amount: subtotal + service_fee };
 }

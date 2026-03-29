@@ -41,15 +41,10 @@ export default function Payment() {
   if (!state || !currentUser) { navigate('/student/upload'); return null; }
   const pricing = DB.getPricing();
   const filesWithPrices = state.files.map(f => {
-    const calc = calcFilePrice(f, pricing);
+    const calc = calcFilePrice(f, pricing, state.isCapstone);
     return { ...f, bw_pages: calc.bw_pages, color_pages: calc.color_pages, file_price: calc.file_price };
   });
-  const capstoneFee = state.isCapstone ? Number(import.meta.env.VITE_CAPSTONE_PROJECT_SERVICE_FEE || '0') : 0;
-  const rawPrice = calcTotal(state.files, state.extras, pricing);
-  const priceResult = {
-    ...rawPrice,
-    total_amount: rawPrice.total_amount + capstoneFee
-  };
+  const priceResult = calcTotal(state.files, state.extras, pricing, state.isCapstone);
 
   const handleGenerateQR = async () => {
     if (!selectedPayment) { setError('Select a payment app'); return; }
@@ -159,11 +154,11 @@ export default function Payment() {
               <span className="text-sm font-semibold text-foreground">₹{f.file_price}</span>
             </div>
           ))}
-          {(state.extras.spiral_binding || state.extras.stapling || capstoneFee > 0) && (
+          {(state.extras.spiral_binding || state.extras.stapling || state.isCapstone) && (
             <div className="pt-2 border-t border-input mt-2 space-y-1">
               {state.extras.spiral_binding && <div className="flex justify-between text-xs text-muted-foreground"><span>Spiral Binding</span><span>₹{pricing.spiral_binding_fee}</span></div>}
-              {state.extras.stapling && <div className="flex justify-between text-xs text-muted-foreground"><span>Stapling</span><span>₹{pricing.stapling_fee}</span></div>}
-              {capstoneFee > 0 && <div className="flex justify-between text-xs text-muted-foreground font-bold text-emerald-600"><span>Project Handling Fee</span><span>₹{capstoneFee}</span></div>}
+              {state.extras.stapling && !state.isCapstone && <div className="flex justify-between text-xs text-muted-foreground"><span>Stapling</span><span>₹{pricing.stapling_fee}</span></div>}
+              {state.isCapstone && <div className="flex justify-between text-xs text-muted-foreground font-bold text-emerald-600"><span>Project Handling/Embossing</span><span>₹{priceResult.service_fee - (state.extras.spiral_binding ? pricing.spiral_binding_fee : 0)}</span></div>}
             </div>
           )}
           <div className="flex justify-between items-center mt-3 pt-3 border-t border-input">

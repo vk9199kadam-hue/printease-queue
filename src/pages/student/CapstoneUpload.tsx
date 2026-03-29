@@ -22,7 +22,7 @@ export default function CapstoneUpload() {
   
   // Step 2: File
   const [uploadedFile, setUploadedFile] = useState<FileItem | null>(null);
-  const [extras, setExtras] = useState<ExtraServices>({ spiral_binding: true, stapling: false }); // Default spiral for projects
+  const [extras, setExtras] = useState<ExtraServices>({ spiral_binding: false, stapling: false, capstone_embossing: 'non-urgent' });
   const [isDragging, setIsDragging] = useState(false);
   const [toast, setToast] = useState('');
   const [step, setStep] = useState(1); // 1: Form, 2: Upload
@@ -231,14 +231,21 @@ export default function CapstoneUpload() {
                     </div>
                    </div>
                    <div>
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">Binding</label>
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">Embossing (Binding)</label>
                     <div className="flex gap-2">
                          <button 
-                           onClick={() => setExtras({ ...extras, spiral_binding: !extras.spiral_binding })}
+                           onClick={() => setExtras({ ...extras, capstone_embossing: 'non-urgent' })}
                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold border-2 transition
-                             ${extras.spiral_binding ? 'bg-amber-500 border-amber-500 text-white' : 'border-input hover:border-amber-200'}`}
+                             ${extras.capstone_embossing === 'non-urgent' ? 'bg-amber-500 border-amber-500 text-white' : 'border-input hover:border-amber-200'}`}
                          >
-                           SPIRAL
+                           NON-URGENT (Default)
+                         </button>
+                         <button 
+                           onClick={() => setExtras({ ...extras, capstone_embossing: 'urgent' })}
+                           className={`flex-1 py-1.5 rounded-lg text-xs font-bold border-2 transition
+                             ${extras.capstone_embossing === 'urgent' ? 'bg-red-500 border-red-500 text-white' : 'border-input hover:border-red-200'}`}
+                         >
+                           URGENT (1 Day)
                          </button>
                     </div>
                    </div>

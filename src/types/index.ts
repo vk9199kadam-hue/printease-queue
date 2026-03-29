@@ -41,6 +41,7 @@ export interface FileItem {
 export interface ExtraServices {
   spiral_binding: boolean;
   stapling: boolean;
+  capstone_embossing?: 'urgent' | 'non-urgent';
 }
 
 export interface Order {
@@ -74,6 +75,9 @@ export interface Pricing {
   color_rate: number;
   spiral_binding_fee: number;
   stapling_fee: number;
+  capstone_page_rate: number;
+  capstone_urgent_fee: number;
+  capstone_non_urgent_fee: number;
 }
 
 export interface Session {

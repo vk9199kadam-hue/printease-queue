@@ -157,7 +157,7 @@ export default function FileUpload() {
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Print Type</label>
               <div className="flex gap-2">
-                {([['bw', 'B&W (₹2/pg)'], ['color', 'Color (₹10/pg)'], ['mixed', 'Mixed']] as const).map(([val, label]) => (
+                {([['bw', `B&W (₹${pricing.bw_rate}/pg)`], ['color', `Color (₹${pricing.color_rate}/pg)`], ['mixed', 'Mixed']] as const).map(([val, label]) => (
                   <button
                     key={val}
                     onClick={() => updateFile(file.temp_id, { print_type: val })}
@@ -253,12 +253,12 @@ export default function FileUpload() {
             <label className="flex items-center gap-3 mb-2 cursor-pointer">
               <input type="checkbox" checked={extras.spiral_binding} onChange={e => setExtras(p => ({ ...p, spiral_binding: e.target.checked }))} className="w-4 h-4 rounded accent-blue-primary" />
               <span className="text-sm text-foreground">Spiral Binding</span>
-              <span className="text-xs text-muted-foreground ml-auto">+₹20</span>
+              <span className="text-xs text-muted-foreground ml-auto">+₹{pricing.spiral_binding_fee}</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={extras.stapling} onChange={e => setExtras(p => ({ ...p, stapling: e.target.checked }))} className="w-4 h-4 rounded accent-blue-primary" />
               <span className="text-sm text-foreground">Stapling</span>
-              <span className="text-xs text-muted-foreground ml-auto">+₹5</span>
+              <span className="text-xs text-muted-foreground ml-auto">+₹{pricing.stapling_fee}</span>
             </label>
           </div>
         )}
